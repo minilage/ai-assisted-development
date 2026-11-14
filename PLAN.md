@@ -1,0 +1,38 @@
+
+# Projektplan – En rigg för en kodbas
+
+## Projektbeskrivning
+
+I det här projektet ska jag bygga en rigg för en AI-kodagent och använda den för att arbeta med en befintlig kodbas.
+
+Jag utgår från kursens övningsprojekt, ett REST-API för kunder och beställningar i TypeScript. Projektet innehåller även en äldre modul för prisberäkning som behöver moderniseras.
+
+Tanken är att skapa ett gemensamt arbetssätt där AI-agenten får tydliga instruktioner och där kodändringar kan kontrolleras automatiskt. Arbetet ska också dokumenteras så att det går att följa vad som har gjorts, vilka beslut som tagits och vad som återstår.
+
+## Vad som ska ingå
+
+Riggen ska innehålla:
+
+- [ ] Projektinstruktioner och en plan för arbetet.
+- [ ] Minst tre skills eller kommandon, varav ett för TDD.
+- [ ] Minst fyra subagenter med tydliga uppgifter.
+- [ ] Minst fem hooks, inklusive hantering av sessionsminne.
+- [ ] Behörigheter med allow, ask och deny.
+- [ ] Automatiska kontroller för kodstandard, formatering och typkontroll.
+- [ ] Sessionsloggar och versionshantering i Git.
+
+## Arbeten som riggen ska användas till
+
+När riggen är på plats ska jag använda den för följande uppgifter från kursprojektet:
+
+- [ ] **Ny funktion:** Välja en user story och arbeta från krav och planering till implementation, testning och granskning.
+- [ ] **Kodgranskning:** Använda riggen för att granska en tilldelad pull request och identifiera problem med säkerhet, struktur och kodstandard.
+- [ ] **Modernisering:** Undersöka den äldre Python-modulen, skapa karakteriseringstester och genomföra mindre refaktoreringar med tester som säkerhetsnät.
+
+## Arbetssätt
+
+Jag kommer att dela upp arbetet i mindre uppgifter och arbeta med en uppgift i taget.
+
+Efter varje steg ska resultatet kontrolleras och dokumenteras. Jag vill kunna se vilka filer som ändrats, vilka tester som körts och om något inte fungerade.
+
+Planen uppdateras under arbetets gång och används tillsammans med sessionsloggarna för att hålla reda på vad som är klart och vad som behöver göras härnäst.
