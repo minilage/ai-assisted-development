@@ -23,7 +23,8 @@ const fs = require("fs");
 const path = require("path");
 
 // Miljövariablerna används bara vid test.
-const LIVE_DIR = process.env.CLAUDE_METRICS_LIVE_DIR || path.join(__dirname, "..", "metrics", "live");
+const LIVE_DIR =
+  process.env.CLAUDE_METRICS_LIVE_DIR || path.join(__dirname, "..", "metrics", "live");
 const CSV_FILE =
   process.env.CLAUDE_METRICS_CSV || path.join(__dirname, "..", "..", "metrics", "arbetsmoment.csv");
 const STATE_FILE = path.join(LIVE_DIR, "recorded.json");
@@ -154,7 +155,16 @@ function tokenTotals(main) {
       });
     }
   }
-  const t = { calls: usageById.size, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, first, last, model };
+  const t = {
+    calls: usageById.size,
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    first,
+    last,
+    model,
+  };
   for (const u of usageById.values()) {
     t.input += u.input;
     t.output += u.output;
@@ -213,7 +223,8 @@ function buildRow(id, reason, snap, tokens) {
     start: localTime(start),
     slut: localTime(end),
     tid_vagg_min: num(c.total_duration_ms) == null ? "" : (c.total_duration_ms / 60000).toFixed(1),
-    tid_api_min: num(c.total_api_duration_ms) == null ? "" : (c.total_api_duration_ms / 60000).toFixed(1),
+    tid_api_min:
+      num(c.total_api_duration_ms) == null ? "" : (c.total_api_duration_ms / 60000).toFixed(1),
     api_anrop: fmt(t.calls),
     input_tokens: fmt(t.input),
     output_tokens: fmt(t.output),
@@ -279,13 +290,17 @@ function upsertRow(row, keepReason) {
   let records = [];
   if (fs.existsSync(CSV_FILE)) {
     const [header, ...data] = parseCsv(fs.readFileSync(CSV_FILE, "utf8"));
-    if (header) records = data.map((r) => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ""])));
+    if (header)
+      records = data.map((r) => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ""])));
   }
   const i = records.findIndex((r) => r.session_id === row.session_id);
   if (i >= 0 && keepReason && records[i].avslut) row.avslut = records[i].avslut;
   if (i >= 0) records[i] = row;
   else records.push(row);
-  const lines = [COLUMNS.join(","), ...records.map((r) => COLUMNS.map((k) => csvField(r[k])).join(","))];
+  const lines = [
+    COLUMNS.join(","),
+    ...records.map((r) => COLUMNS.map((k) => csvField(r[k])).join(",")),
+  ];
   writeAtomic(CSV_FILE, lines.join("\n") + "\n");
 }
 
@@ -333,7 +348,10 @@ function sweep(input, state) {
 function logError(err) {
   try {
     fs.mkdirSync(LIVE_DIR, { recursive: true });
-    fs.appendFileSync(ERROR_LOG, `${new Date().toISOString()} ${err && err.message ? err.message : err}\n`);
+    fs.appendFileSync(
+      ERROR_LOG,
+      `${new Date().toISOString()} ${err && err.message ? err.message : err}\n`,
+    );
   } catch {
     /* ignorera */
   }

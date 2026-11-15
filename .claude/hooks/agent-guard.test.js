@@ -16,7 +16,10 @@ const p = (...parts) => path.join(PROJECT, ...parts);
 
 const bash = (command) => ({ tool_name: "Bash", tool_input: { command } });
 const write = (file_path) => ({ tool_name: "Write", tool_input: { file_path, content: "x" } });
-const edit = (file_path) => ({ tool_name: "Edit", tool_input: { file_path, old_string: "a", new_string: "b" } });
+const edit = (file_path) => ({
+  tool_name: "Edit",
+  tool_input: { file_path, old_string: "a", new_string: "b" },
+});
 const read = (file_path) => ({ tool_name: "Read", tool_input: { file_path } });
 const glob = (pattern) => ({ tool_name: "Glob", tool_input: { pattern } });
 const grep = (pattern, extra = {}) => ({ tool_name: "Grep", tool_input: { pattern, ...extra } });
@@ -24,7 +27,11 @@ const grep = (pattern, extra = {}) => ({ tool_name: "Grep", tool_input: { patter
 function check(mode, input, allowed) {
   const result = decide(mode, input, PROJECT);
   const what = JSON.stringify(input.tool_input);
-  assert.equal(result.allow, allowed, `${mode}: ${what} ska ${allowed ? "tillåtas" : "blockeras"} (${result.reason})`);
+  assert.equal(
+    result.allow,
+    allowed,
+    `${mode}: ${what} ska ${allowed ? "tillåtas" : "blockeras"} (${result.reason})`,
+  );
   if (!allowed) assert.ok(result.reason, `${mode}: ${what} blockerades utan orsak`);
 }
 
@@ -87,8 +94,8 @@ const READ_BLOCKED = [
   ["git branch ny-gren", "git branch som skapar gren"],
   ["git -C . commit -m x", "git med -C"],
   ["npm run format", "formatering"],
-  ['node -e "require(\'fs\').writeFileSync(\'x\',\'y\')"', "node -e"],
-  ['python -c "open(\'x\',\'w\')"', "python -c"],
+  ["node -e \"require('fs').writeFileSync('x','y')\"", "node -e"],
+  ["python -c \"open('x','w')\"", "python -c"],
   ['bash -c "git status"', "bash -c"],
   ['grep "abc src', "citattecken som inte stängs"],
   ["", "tomt kommando"],
@@ -118,7 +125,13 @@ for (const mode of ["read", "checks", "plans-write"]) {
 // --- read: granskare ---
 
 test("read: kontroller och tester körs inte", () => {
-  for (const c of ["npm test", "npm run lint", "npx jest", "node --test x.test.js", "python -m pytest"]) {
+  for (const c of [
+    "npm test",
+    "npm run lint",
+    "npx jest",
+    "node --test x.test.js",
+    "python -m pytest",
+  ]) {
     check("read", bash(c), false);
   }
 });
@@ -199,7 +212,11 @@ test("plans-write: andra filer och felaktiga namn blockeras", () => {
     check("plans-write", write(f), false);
     check("plans-write", edit(f), false);
   }
-  check("plans-write", { tool_name: "NotebookEdit", tool_input: { notebook_path: p("docs", "plans", "02-x.md") } }, false);
+  check(
+    "plans-write",
+    { tool_name: "NotebookEdit", tool_input: { notebook_path: p("docs", "plans", "02-x.md") } },
+    false,
+  );
 });
 
 test("plans-write: planer får inte skrivas via Bash", () => {
@@ -344,7 +361,10 @@ test("okänt läge, saknat verktyg och saknat kommando blockeras", () => {
 });
 
 test("andra verktyg släpps igenom, eftersom de styrs av agentens tools", () => {
-  assert.equal(decide("read", { tool_name: "WebSearch", tool_input: { query: "x" } }, PROJECT).allow, true);
+  assert.equal(
+    decide("read", { tool_name: "WebSearch", tool_input: { query: "x" } }, PROJECT).allow,
+    true,
+  );
 });
 
 // --- Hooken som process, så som Claude Code anropar den ---
@@ -383,9 +403,17 @@ test("process: projektkatalogen tas från cwd i indata när CLAUDE_PROJECT_DIR s
   assert.equal(r.status, 0, r.stderr);
 });
 
-test("process: sökvägar i Git Bash-form (/c/...) tolkas på Windows", { skip: process.platform !== "win32" }, () => {
-  const posix = p("docs", "plans", "02-x.md").replace(/\\/g, "/").replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
-  assert.equal(decide("plans-write", write(posix), PROJECT).allow, true);
-  const outside = p("src", "app.ts").replace(/\\/g, "/").replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
-  assert.equal(decide("plans-write", write(outside), PROJECT).allow, false);
-});
+test(
+  "process: sökvägar i Git Bash-form (/c/...) tolkas på Windows",
+  { skip: process.platform !== "win32" },
+  () => {
+    const posix = p("docs", "plans", "02-x.md")
+      .replace(/\\/g, "/")
+      .replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
+    assert.equal(decide("plans-write", write(posix), PROJECT).allow, true);
+    const outside = p("src", "app.ts")
+      .replace(/\\/g, "/")
+      .replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`);
+    assert.equal(decide("plans-write", write(outside), PROJECT).allow, false);
+  },
+);

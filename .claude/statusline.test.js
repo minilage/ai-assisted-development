@@ -21,7 +21,11 @@ const roots = [];
 function sandbox() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "sl-test-"));
   roots.push(root);
-  return { root, live: path.join(root, "metrics", "live"), user: path.join(root, "user-statusline.js") };
+  return {
+    root,
+    live: path.join(root, "metrics", "live"),
+    user: path.join(root, "user-statusline.js"),
+  };
 }
 process.on("exit", () => {
   for (const r of roots) fs.rmSync(r, { recursive: true, force: true });
@@ -139,7 +143,10 @@ test("Rad 2 visar kontext, uppskattad kostnad, tid och gränser med avrundning",
 test("Rad 2 utan API-tid och utan gränser visar bara det som finns", () => {
   const dirs = sandbox();
   writeUserStatusline(dirs);
-  const r = run(dirs, status({ cost: { total_duration_ms: 90000 }, rate_limits: undefined, context_window: {} }));
+  const r = run(
+    dirs,
+    status({ cost: { total_duration_ms: 90000 }, rate_limits: undefined, context_window: {} }),
+  );
   assert.equal(r.stdout.split("\n")[1], "Tid 2 min");
 });
 
@@ -242,7 +249,10 @@ test("Två uppdateringar: en fil, senaste värden, första tidpunkten och högst
     status({
       cost: { total_cost_usd: 2.5, total_duration_ms: 3600000 },
       context_window: { context_window_size: 1000000, used_percentage: 8 },
-      rate_limits: { five_hour: { used_percentage: 14, resets_at: 1000 }, seven_day: { used_percentage: 2, resets_at: 2000 } },
+      rate_limits: {
+        five_hour: { used_percentage: 14, resets_at: 1000 },
+        seven_day: { used_percentage: 2, resets_at: 2000 },
+      },
     }),
   );
   assert.deepEqual(fs.readdirSync(dirs.live), [`${SID}.json`], "en fil och inga .tmp-filer");
@@ -297,7 +307,9 @@ test("Gränser saknas före första API-svaret och kommer senare: mätningen bö
 test("5-timmarsfönstret återställs: förbrukningen summeras över fönstren", () => {
   const dirs = sandbox();
   writeUserStatusline(dirs);
-  const five = (pct, reset) => ({ rate_limits: { five_hour: { used_percentage: pct, resets_at: reset } } });
+  const five = (pct, reset) => ({
+    rate_limits: { five_hour: { used_percentage: pct, resets_at: reset } },
+  });
   run(dirs, status(five(80, 1000)));
   run(dirs, status(five(95, 1000)));
   run(dirs, status(five(3, 9000)));
@@ -348,9 +360,19 @@ test(
   () => {
     const dirs = sandbox();
     const input = JSON.stringify(
-      status({ context_window: { context_window_size: 1000000, used_percentage: 12, current_usage: { input_tokens: 5, cache_read_input_tokens: 120000 } } }),
+      status({
+        context_window: {
+          context_window_size: 1000000,
+          used_percentage: 12,
+          current_usage: { input_tokens: 5, cache_read_input_tokens: 120000 },
+        },
+      }),
     );
-    const direct = spawnSync(process.execPath, [REAL_USER_STATUSLINE], { input, encoding: "utf8", timeout: 5000 });
+    const direct = spawnSync(process.execPath, [REAL_USER_STATUSLINE], {
+      input,
+      encoding: "utf8",
+      timeout: 5000,
+    });
     const via = run(dirs, input, REAL_USER_STATUSLINE);
     assert.equal(via.stdout.split("\n")[0], direct.stdout.trim());
     assert.equal(direct.stdout.trim(), "Context: 120k / 1000k");

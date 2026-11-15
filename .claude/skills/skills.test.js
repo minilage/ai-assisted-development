@@ -31,7 +31,12 @@ const EXPECTED = {
   karakterisera: {
     invocation: "user",
     required: ["argument-hint"],
-    mentions: ["src/legacy/price_calc.py", "src/pricing/legacyPrice.ts", "jobs/nightly_report.py", "npm run test:legacy"],
+    mentions: [
+      "src/legacy/price_calc.py",
+      "src/pricing/legacyPrice.ts",
+      "jobs/nightly_report.py",
+      "npm run test:legacy",
+    ],
   },
   planera: {
     invocation: "both",
@@ -56,15 +61,57 @@ const PLAN_HEADINGS = [
 ];
 
 // Rubriker från docs/prompt-template.md. "Exempel" är valfri.
-const HEADINGS = ["Roll", "Uppgift", "Kontext", "Regler", "Förväntat resultat", "Verifiering", "Stoppvillkor"];
+const HEADINGS = [
+  "Roll",
+  "Uppgift",
+  "Kontext",
+  "Regler",
+  "Förväntat resultat",
+  "Verifiering",
+  "Stoppvillkor",
+];
 
 // Inbyggda och reserverade namn som en projektskill inte får ta.
 const RESERVED = new Set([
-  "anthropic-skills", "synced", "code-review", "review", "simplify", "init", "security-review",
-  "run", "loop", "schedule", "help", "clear", "compact", "config", "context", "cost", "hooks",
-  "memory", "model", "permissions", "plugin", "skills", "reload-skills", "status", "statusline",
-  "agents", "login", "logout", "doctor", "fast", "rename", "resume", "usage", "batch", "debug",
-  "claude-api", "update-config", "keybindings-help", "fewer-permission-prompts",
+  "anthropic-skills",
+  "synced",
+  "code-review",
+  "review",
+  "simplify",
+  "init",
+  "security-review",
+  "run",
+  "loop",
+  "schedule",
+  "help",
+  "clear",
+  "compact",
+  "config",
+  "context",
+  "cost",
+  "hooks",
+  "memory",
+  "model",
+  "permissions",
+  "plugin",
+  "skills",
+  "reload-skills",
+  "status",
+  "statusline",
+  "agents",
+  "login",
+  "logout",
+  "doctor",
+  "fast",
+  "rename",
+  "resume",
+  "usage",
+  "batch",
+  "debug",
+  "claude-api",
+  "update-config",
+  "keybindings-help",
+  "fewer-permission-prompts",
 ]);
 
 const MAX_DESCRIPTION = 1536;
@@ -93,12 +140,15 @@ function checkSkill(dir, root = REPO_ROOT) {
   const { text, front, body } = parseSkill(file);
 
   if (!front) return [`${name}: frontmatter saknas eller börjar inte på rad 1`];
-  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) errors.push(`${name}: katalognamnet är inte kebab-case`);
-  if (front.name !== name) errors.push(`${name}: name (${front.name}) skiljer sig från katalognamnet`);
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name))
+    errors.push(`${name}: katalognamnet är inte kebab-case`);
+  if (front.name !== name)
+    errors.push(`${name}: name (${front.name}) skiljer sig från katalognamnet`);
   if (RESERVED.has(name)) errors.push(`${name}: namnet är inbyggt eller reserverat`);
   if (!front.description) errors.push(`${name}: description saknas`);
   const descLen = (front.description || "").length + (front.when_to_use || "").length;
-  if (descLen > MAX_DESCRIPTION) errors.push(`${name}: description är för lång (${descLen} tecken)`);
+  if (descLen > MAX_DESCRIPTION)
+    errors.push(`${name}: description är för lång (${descLen} tecken)`);
   const bodyLines = body.split("\n").length;
   if (bodyLines >= MAX_LINES) errors.push(`${name}: brödtexten har ${bodyLines} rader`);
 
@@ -117,8 +167,10 @@ function checkSkill(dir, root = REPO_ROOT) {
   for (const m of body.matchAll(/`([^`\s]+)`/g)) {
     const p = m[1];
     if (/[<>*${}]/.test(p)) continue;
-    if (!/^\.?[\w-]+(\/[\w.-]+)+\/?$/.test(p) && !/^[\w-]+\.(md|ts|py|js|json|ini)$/.test(p)) continue;
-    if (!fs.existsSync(path.join(root, p))) errors.push(`${name}: filen eller katalogen finns inte: ${p}`);
+    if (!/^\.?[\w-]+(\/[\w.-]+)+\/?$/.test(p) && !/^[\w-]+\.(md|ts|py|js|json|ini)$/.test(p))
+      continue;
+    if (!fs.existsSync(path.join(root, p)))
+      errors.push(`${name}: filen eller katalogen finns inte: ${p}`);
   }
 
   // npm-skript som nämns måste finnas i package.json.
@@ -134,7 +186,10 @@ function checkSkill(dir, root = REPO_ROOT) {
 
   // Inga personuppgifter eller hemligheter.
   if (/[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(text)) errors.push(`${name}: innehåller en e-postadress`);
-  if (/(api[_-]?key|password|secret|token)\s*[:=]\s*\S+/i.test(text) || /\bsk-[A-Za-z0-9]{10,}/.test(text))
+  if (
+    /(api[_-]?key|password|secret|token)\s*[:=]\s*\S+/i.test(text) ||
+    /\bsk-[A-Za-z0-9]{10,}/.test(text)
+  )
     errors.push(`${name}: innehåller något som liknar en hemlighet`);
 
   return errors;
@@ -151,7 +206,8 @@ function skillDirs() {
 
 test("De förväntade skillsen finns", () => {
   const names = skillDirs().map((d) => path.basename(d));
-  for (const n of Object.keys(EXPECTED)) assert.ok(names.includes(n), `${n} saknas i .claude/skills/`);
+  for (const n of Object.keys(EXPECTED))
+    assert.ok(names.includes(n), `${n} saknas i .claude/skills/`);
 });
 
 test("Varje skill följer strukturen", () => {
@@ -191,12 +247,20 @@ test("planera: mallen och sparade planer har alla rubriker", () => {
   assert.ok(fs.existsSync(mall), "mall.md saknas");
   const plansDir = path.join(REPO_ROOT, "docs", "plans");
   const plans = fs.existsSync(plansDir)
-    ? fs.readdirSync(plansDir).filter((f) => /^\d{2}-[a-z0-9-]+\.md$/.test(f)).map((f) => path.join(plansDir, f))
+    ? fs
+        .readdirSync(plansDir)
+        .filter((f) => /^\d{2}-[a-z0-9-]+\.md$/.test(f))
+        .map((f) => path.join(plansDir, f))
     : [];
   for (const file of [mall, ...plans]) {
-    const headings = [...fs.readFileSync(file, "utf8").matchAll(/^## (.+)$/gm)].map((m) => m[1].trim());
+    const headings = [...fs.readFileSync(file, "utf8").matchAll(/^## (.+)$/gm)].map((m) =>
+      m[1].trim(),
+    );
     for (const h of PLAN_HEADINGS) {
-      assert.ok(headings.some((x) => x.startsWith(h)), `${path.basename(file)}: rubriken "${h}" saknas`);
+      assert.ok(
+        headings.some((x) => x.startsWith(h)),
+        `${path.basename(file)}: rubriken "${h}" saknas`,
+      );
     }
   }
 });
@@ -209,7 +273,8 @@ test("granska-standard: checklistan täcker alla avsnitt i docs/standard.md", ()
   const standard = fs.readFileSync(path.join(REPO_ROOT, "docs", "standard.md"), "utf8");
   const sections = [...standard.matchAll(/^## (.+)$/gm)].map((m) => m[1].trim());
   assert.ok(sections.length > 0, "inga avsnitt i docs/standard.md");
-  for (const s of sections) assert.match(list, new RegExp(`^## ${s}$`, "m"), `avsnittet "${s}" saknas i checklistan`);
+  for (const s of sections)
+    assert.match(list, new RegExp(`^## ${s}$`, "m"), `avsnittet "${s}" saknas i checklistan`);
   const rules = [...standard.matchAll(/^- (.+)$/gm)].length;
   const ids = new Set([...list.matchAll(/^### (S\d+)\b/gm)].map((m) => m[1]));
   assert.equal(ids.size, rules, `docs/standard.md har ${rules} regler men checklistan ${ids.size}`);
@@ -234,7 +299,10 @@ const GOOD_BODY = HEADINGS.map((h) => `## ${h}\n\nText.\n`).join("\n");
 function fixture(name, content, extra = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "skills-test-"));
   roots.push(root);
-  fs.writeFileSync(path.join(root, "package.json"), JSON.stringify({ scripts: { lint: "eslint" } }));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({ scripts: { lint: "eslint" } }),
+  );
   fs.mkdirSync(path.join(root, "docs"));
   fs.writeFileSync(path.join(root, "docs", "finns.md"), "x");
   const dir = path.join(root, name);
@@ -255,29 +323,82 @@ function errorsFor(name, content, extra) {
 
 test("Valideringen godkänner en korrekt skill", () => {
   const body = `${GOOD_BODY}\nSe [mall](mall.md), \`docs/finns.md\` och \`npm run lint\`.\n`;
-  assert.deepEqual(errorsFor("bra-skill", skill("bra-skill", "description: Gör något.\n", body), { "mall.md": "x" }), []);
+  assert.deepEqual(
+    errorsFor("bra-skill", skill("bra-skill", "description: Gör något.\n", body), {
+      "mall.md": "x",
+    }),
+    [],
+  );
 });
 
 test("Valideringen fångar varje typ av fel", () => {
   const cases = [
     ["frontmatter saknas", "ingen-front", GOOD_BODY, /frontmatter saknas/],
-    ["frontmatter inte på rad 1", "rad-ett", `\n${skill("rad-ett", "description: x\n")}`, /frontmatter saknas/],
+    [
+      "frontmatter inte på rad 1",
+      "rad-ett",
+      `\n${skill("rad-ett", "description: x\n")}`,
+      /frontmatter saknas/,
+    ],
     ["name skiljer sig", "namn", skill("annat", "description: x\n"), /skiljer sig/],
     ["inte kebab-case", "Stor_Bokstav", skill("Stor_Bokstav", "description: x\n"), /kebab-case/],
     ["reserverat namn", "code-review", skill("code-review", "description: x\n"), /reserverat/],
     ["description saknas", "utan-beskrivning", skill("utan-beskrivning", ""), /description saknas/],
-    ["för lång description", "lang", skill("lang", `description: ${"x".repeat(1537)}\n`), /för lång/],
-    ["för lång brödtext", "langre", skill("langre", "description: x\n", GOOD_BODY + "rad\n".repeat(500)), /brödtexten/],
-    ["rubrik saknas", "rubrik", skill("rubrik", "description: x\n", GOOD_BODY.replace("## Stoppvillkor", "## Annat")), /Stoppvillkor/],
-    ["länkad fil saknas", "lank", skill("lank", "description: x\n", `${GOOD_BODY}[x](saknas.md)\n`), /länkad fil saknas/],
-    ["projektfil saknas", "fil", skill("fil", "description: x\n", `${GOOD_BODY}\`docs/saknas.md\`\n`), /finns inte: docs\/saknas.md/],
-    ["npm-skript saknas", "skript", skill("skript", "description: x\n", `${GOOD_BODY}npm run deploy\n`), /npm-skriptet finns inte: deploy/],
-    ["e-postadress", "epost", skill("epost", "description: x\n", `${GOOD_BODY}kontakt@exempel.se\n`), /e-postadress/],
-    ["hemlighet", "hemlis", skill("hemlis", "description: x\n", `${GOOD_BODY}password = hunter2\n`), /hemlighet/],
+    [
+      "för lång description",
+      "lang",
+      skill("lang", `description: ${"x".repeat(1537)}\n`),
+      /för lång/,
+    ],
+    [
+      "för lång brödtext",
+      "langre",
+      skill("langre", "description: x\n", GOOD_BODY + "rad\n".repeat(500)),
+      /brödtexten/,
+    ],
+    [
+      "rubrik saknas",
+      "rubrik",
+      skill("rubrik", "description: x\n", GOOD_BODY.replace("## Stoppvillkor", "## Annat")),
+      /Stoppvillkor/,
+    ],
+    [
+      "länkad fil saknas",
+      "lank",
+      skill("lank", "description: x\n", `${GOOD_BODY}[x](saknas.md)\n`),
+      /länkad fil saknas/,
+    ],
+    [
+      "projektfil saknas",
+      "fil",
+      skill("fil", "description: x\n", `${GOOD_BODY}\`docs/saknas.md\`\n`),
+      /finns inte: docs\/saknas.md/,
+    ],
+    [
+      "npm-skript saknas",
+      "skript",
+      skill("skript", "description: x\n", `${GOOD_BODY}npm run deploy\n`),
+      /npm-skriptet finns inte: deploy/,
+    ],
+    [
+      "e-postadress",
+      "epost",
+      skill("epost", "description: x\n", `${GOOD_BODY}kontakt@exempel.se\n`),
+      /e-postadress/,
+    ],
+    [
+      "hemlighet",
+      "hemlis",
+      skill("hemlis", "description: x\n", `${GOOD_BODY}password = hunter2\n`),
+      /hemlighet/,
+    ],
   ];
   for (const [label, name, content, re] of cases) {
     const errors = errorsFor(name, content);
-    assert.ok(errors.some((e) => re.test(e)), `${label}: fångades inte (${JSON.stringify(errors)})`);
+    assert.ok(
+      errors.some((e) => re.test(e)),
+      `${label}: fångades inte (${JSON.stringify(errors)})`,
+    );
   }
 });
 

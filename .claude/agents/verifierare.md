@@ -41,7 +41,7 @@ Ingår inte:
 ## Kontext och relevanta dokument
 
 - `CLAUDE.md`: avsnittet "Tester och verifiering".
-- `PLAN.md` och senaste loggen i `sessions/`: kända fel som redan fanns. Det gäller till exempel att `format:check` rapporterade 15 filer redan när riggen byggdes, och att `pytest` och `psycopg` saknas.
+- `PLAN.md` och senaste loggen i `sessions/`: kända fel som redan fanns. Det gäller till exempel att `format:check` rapporterade 15 filer i `src/` och `tests/` redan när riggen byggdes, och att `pytest` och `psycopg` saknas. Sedan Session 10 kontrollerar `format:check` också `.claude/**/*.js`. Riggens JS-filer är formaterade, så en riggfil i listan är ett nytt fel.
 - `docs/plans/`: testplanen för den ändring som ska verifieras, om den finns.
 - `package.json`: vilka skript som finns.
 

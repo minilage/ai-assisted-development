@@ -50,20 +50,40 @@ function assistant(id, usage, ts, extra = {}) {
     type: "assistant",
     timestamp: ts,
     cwd: "C:\\Users\\Someone\\proj",
-    message: { id, role: "assistant", model: "claude-opus-5-5", usage, content: [{ type: "text", text: SECRET_TEXT }] },
+    message: {
+      id,
+      role: "assistant",
+      model: "claude-opus-5-5",
+      usage,
+      content: [{ type: "text", text: SECRET_TEXT }],
+    },
     ...extra,
   };
 }
 
-const U1 = { input_tokens: 10, output_tokens: 100, cache_read_input_tokens: 1000, cache_creation_input_tokens: 500 };
-const U2 = { input_tokens: 5, output_tokens: 50, cache_read_input_tokens: 2000, cache_creation_input_tokens: 0 };
+const U1 = {
+  input_tokens: 10,
+  output_tokens: 100,
+  cache_read_input_tokens: 1000,
+  cache_creation_input_tokens: 500,
+};
+const U2 = {
+  input_tokens: 5,
+  output_tokens: 50,
+  cache_read_input_tokens: 2000,
+  cache_creation_input_tokens: 0,
+};
 
 function writeTranscript(dirs, id, entries, sub) {
   const base = sub ? path.join(dirs.projects, sub.parent, "subagents") : dirs.projects;
   fs.mkdirSync(base, { recursive: true });
   const file = path.join(base, sub ? `${id}.jsonl` : `${id}.jsonl`);
   const lines = [
-    { type: "user", timestamp: entries[0].timestamp, message: { role: "user", content: SECRET_TEXT } },
+    {
+      type: "user",
+      timestamp: entries[0].timestamp,
+      message: { role: "user", content: SECRET_TEXT },
+    },
     ...entries,
   ];
   fs.writeFileSync(file, lines.map((l) => JSON.stringify(l)).join("\n") + "\n");
@@ -89,8 +109,22 @@ function writeSnapshot(dirs, id, transcriptPath, over = {}) {
     },
     context: { window_size: 1000000, used_pct: 12, max_used_pct: 20 },
     rate_limits: {
-      five_hour: { first_pct: 10, last_pct: 15, resets_at: 1, earlier_windows_pct: 0, consumed_pct: 5, window_changed: false },
-      seven_day: { first_pct: 1, last_pct: 2, resets_at: 2, earlier_windows_pct: 0, consumed_pct: 1, window_changed: false },
+      five_hour: {
+        first_pct: 10,
+        last_pct: 15,
+        resets_at: 1,
+        earlier_windows_pct: 0,
+        consumed_pct: 5,
+        window_changed: false,
+      },
+      seven_day: {
+        first_pct: 1,
+        last_pct: 2,
+        resets_at: 2,
+        earlier_windows_pct: 0,
+        consumed_pct: 1,
+        window_changed: false,
+      },
     },
     ...over,
   };
@@ -148,7 +182,12 @@ function standardSession(dirs, id = SID) {
 test("SessionEnd: en rad, tokens per unikt API-svar räknas en gång", () => {
   const dirs = sandbox();
   const t = standardSession(dirs);
-  const r = run(dirs, "end", { session_id: SID, transcript_path: t, reason: "clear", hook_event_name: "SessionEnd" });
+  const r = run(dirs, "end", {
+    session_id: SID,
+    transcript_path: t,
+    reason: "clear",
+    hook_event_name: "SessionEnd",
+  });
   assert.equal(r.status, 0);
   assert.equal(r.stdout, "");
   const rows = parseCsv(fs.readFileSync(dirs.csv, "utf8"));
@@ -183,7 +222,11 @@ test("Körs två gånger: fortfarande en rad med samma värden (ingen dubbelräk
   run(dirs, "end", input);
   const first = fs.readFileSync(dirs.csv, "utf8");
   run(dirs, "end", input);
-  run(dirs, "start", { session_id: SID2, transcript_path: path.join(dirs.projects, `${SID2}.jsonl`), source: "clear" });
+  run(dirs, "start", {
+    session_id: SID2,
+    transcript_path: path.join(dirs.projects, `${SID2}.jsonl`),
+    source: "clear",
+  });
   assert.equal(fs.readFileSync(dirs.csv, "utf8"), first);
 });
 
@@ -203,11 +246,20 @@ test("Återupptagen session: raden uppdateras i stället för att en ny läggs t
 test("SessionStart efter /clear: avslut från SessionEnd behålls när transkriptet har vuxit", () => {
   const dirs = sandbox();
   const t = standardSession(dirs);
-  run(dirs, "end", { session_id: SID, transcript_path: t, reason: "clear", hook_event_name: "SessionEnd" });
+  run(dirs, "end", {
+    session_id: SID,
+    transcript_path: t,
+    reason: "clear",
+    hook_event_name: "SessionEnd",
+  });
   // Claude Code kan skriva fler rader till transkriptet efter att SessionEnd-hooken har körts.
   fs.appendFileSync(t, JSON.stringify(assistant("msg_3", U2, "2026-11-15T11:00:00.000Z")) + "\n");
   fs.appendFileSync(t, JSON.stringify({ type: "cost-state", totalCostUSD: 1.5 }) + "\n");
-  run(dirs, "start", { session_id: SID2, transcript_path: path.join(dirs.projects, `${SID2}.jsonl`), source: "clear" });
+  run(dirs, "start", {
+    session_id: SID2,
+    transcript_path: path.join(dirs.projects, `${SID2}.jsonl`),
+    source: "clear",
+  });
   const rows = parseCsv(fs.readFileSync(dirs.csv, "utf8"));
   assert.equal(rows.length, 1);
   assert.equal(rows[0].avslut, "clear");
@@ -262,7 +314,12 @@ test("Subagenternas transkript räknas, och samma svar räknas bara en gång", (
 test("Integritet: inga sökvägar, ingen cwd och ingen konversationstext i CSV", () => {
   const dirs = sandbox();
   const t = standardSession(dirs);
-  run(dirs, "end", { session_id: SID, transcript_path: t, reason: "clear", cwd: "C:\\Users\\Someone\\proj" });
+  run(dirs, "end", {
+    session_id: SID,
+    transcript_path: t,
+    reason: "clear",
+    cwd: "C:\\Users\\Someone\\proj",
+  });
   const csv = fs.readFileSync(dirs.csv, "utf8");
   assert.ok(!csv.includes(SECRET_TEXT));
   assert.ok(!csv.includes("Someone"));
@@ -299,7 +356,14 @@ test("Felfall: trasig indata, ogiltigt session_id och saknat transkript ger exit
     ["end", "{inte json"],
     ["end", ""],
     ["end", { session_id: "../../evil", transcript_path: "x.jsonl", reason: "clear" }],
-    ["end", { session_id: SID, transcript_path: path.join(dirs.projects, "saknas.jsonl"), reason: "clear" }],
+    [
+      "end",
+      {
+        session_id: SID,
+        transcript_path: path.join(dirs.projects, "saknas.jsonl"),
+        reason: "clear",
+      },
+    ],
     ["start", "{inte json"],
     ["okänt", { session_id: SID }],
   ]) {
@@ -319,8 +383,22 @@ test("Mätningen började sent: osäkra gränsvärden lämnas tomma i stället f
   writeSnapshot(dirs, SID, t, {
     first_seen: "2026-11-15T13:30:00.000Z", // 3,5 timmar senare
     rate_limits: {
-      five_hour: { first_pct: 11, last_pct: 11, resets_at: 1, earlier_windows_pct: 0, consumed_pct: 0, window_changed: false },
-      seven_day: { first_pct: 1, last_pct: 1, resets_at: 2, earlier_windows_pct: 0, consumed_pct: 0, window_changed: false },
+      five_hour: {
+        first_pct: 11,
+        last_pct: 11,
+        resets_at: 1,
+        earlier_windows_pct: 0,
+        consumed_pct: 0,
+        window_changed: false,
+      },
+      seven_day: {
+        first_pct: 1,
+        last_pct: 1,
+        resets_at: 2,
+        earlier_windows_pct: 0,
+        consumed_pct: 0,
+        window_changed: false,
+      },
     },
   });
   run(dirs, "end", { session_id: SID, transcript_path: t, reason: "clear" });
@@ -362,7 +440,12 @@ test("Gränsvärden saknas i ögonblicksbilden: fälten blir tomma, inte 0", () 
   writeSnapshot(dirs, SID, t, { rate_limits: { five_hour: null, seven_day: null } });
   run(dirs, "end", { session_id: SID, transcript_path: t, reason: "clear" });
   const row = parseCsv(fs.readFileSync(dirs.csv, "utf8"))[0];
-  for (const k of ["femtimmar_fore_pct", "femtimmar_efter_pct", "femtimmar_forbrukat_pct", "vecka_forbrukat_pct"]) {
+  for (const k of [
+    "femtimmar_fore_pct",
+    "femtimmar_efter_pct",
+    "femtimmar_forbrukat_pct",
+    "vecka_forbrukat_pct",
+  ]) {
     assert.equal(row[k], "", k);
   }
 });

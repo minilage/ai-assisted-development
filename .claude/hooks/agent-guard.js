@@ -46,7 +46,8 @@ function parse(cmd) {
       else tok += c;
       continue;
     }
-    if (c === "`" || (c === "$" && next === "(")) return { unsafe: "kommandosubstitution ($(...) eller backticks)" };
+    if (c === "`" || (c === "$" && next === "("))
+      return { unsafe: "kommandosubstitution ($(...) eller backticks)" };
     if (quote === '"') {
       if (c === '"') quote = null;
       else if (c === "\\" && i + 1 < cmd.length) tok += cmd[++i];
@@ -143,7 +144,9 @@ const READ_RULES = [
   rule(["git", "blame"]),
   rule(["git", "rev-parse"]),
   rule(["git", "ls-files"]),
-  rule(["git", "branch"], { only: [/^--show-current$/, /^-a$/, /^--all$/, /^-r$/, /^--list$/, /^-v+$/] }),
+  rule(["git", "branch"], {
+    only: [/^--show-current$/, /^-a$/, /^--all$/, /^-r$/, /^--list$/, /^-v+$/],
+  }),
   rule(["grep"]),
   rule(["cat"]),
   rule(["head"]),
@@ -152,7 +155,10 @@ const READ_RULES = [
   rule(["wc"]),
   rule(["find"], { forbid: [/^-(exec|execdir|ok|okdir|delete|fprint0?|fprintf|fls)$/] }),
   // Bara utskrift av rader, till exempel sed -n '10,20p' fil.
-  rule(["sed", "-n"], { check: (a) => a.length >= 1 && /^\d+(,\d+)?p$/.test(a[0]) && a.slice(1).every((x) => !x.startsWith("-")) }),
+  rule(["sed", "-n"], {
+    check: (a) =>
+      a.length >= 1 && /^\d+(,\d+)?p$/.test(a[0]) && a.slice(1).every((x) => !x.startsWith("-")),
+  }),
   rule(["md5sum"]),
   rule(["sha256sum"]),
   rule(["sort"], { forbid: [/^-o/, ...NO_OUTPUT] }),
@@ -190,8 +196,10 @@ function ruleViolation(seg, rules) {
     const notOnly = r.only ? args.find((a) => !r.only.some((re) => re.test(a))) : undefined;
     if (notOnly !== undefined) return `argumentet "${notOnly}" är inte tillåtet för "${name}"`;
     const forbidden = r.forbid && args.find((a) => r.forbid.some((re) => re.test(a)));
-    if (forbidden) return `argumentet "${forbidden}" är inte tillåtet för "${name}" ("${name}" i sig är tillåtet)`;
-    if (r.check && !r.check(args)) return `argumenten för "${name}" är inte tillåtna i det här läget`;
+    if (forbidden)
+      return `argumentet "${forbidden}" är inte tillåtet för "${name}" ("${name}" i sig är tillåtet)`;
+    if (r.check && !r.check(args))
+      return `argumenten för "${name}" är inte tillåtna i det här läget`;
     return null;
   }
   return `kommandot finns inte bland de tillåtna i det här läget: ${seg.slice(0, 3).join(" ")}`;
@@ -212,16 +220,71 @@ function checkAllowlist(command, rules) {
 // --- dev: spärrlista ---
 
 const GIT_BLOCKED = new Set([
-  "add", "commit", "push", "pull", "reset", "rebase", "stash", "checkout", "switch", "restore",
-  "merge", "tag", "clean", "rm", "mv", "cherry-pick", "revert", "am", "config", "update-ref",
-  "filter-branch", "reflog", "gc", "prune", "worktree", "submodule", "remote", "init",
+  "add",
+  "commit",
+  "push",
+  "pull",
+  "reset",
+  "rebase",
+  "stash",
+  "checkout",
+  "switch",
+  "restore",
+  "merge",
+  "tag",
+  "clean",
+  "rm",
+  "mv",
+  "cherry-pick",
+  "revert",
+  "am",
+  "config",
+  "update-ref",
+  "filter-branch",
+  "reflog",
+  "gc",
+  "prune",
+  "worktree",
+  "submodule",
+  "remote",
+  "init",
 ]);
-const SHELLS = new Set(["bash", "sh", "zsh", "dash", "pwsh", "powershell", "cmd", "eval", "exec", "source", ".", "xargs", "env", "sudo"]);
+const SHELLS = new Set([
+  "bash",
+  "sh",
+  "zsh",
+  "dash",
+  "pwsh",
+  "powershell",
+  "cmd",
+  "eval",
+  "exec",
+  "source",
+  ".",
+  "xargs",
+  "env",
+  "sudo",
+]);
 const REMOVE = new Set(["rm", "rmdir", "unlink", "shred", "del", "mv", "remove-item", "move-item"]);
 const NETWORK = new Set(["curl", "wget", "invoke-webrequest", "invoke-restmethod", "ssh", "scp"]);
 const DATABASE = new Set(["docker", "docker-compose", "psql", "pg_dump", "dropdb", "createdb"]);
 const INSTALLERS = new Set(["pip", "pip3", "yarn", "pnpm", "uv", "poetry", "conda"]);
-const NPM_BLOCKED = new Set(["install", "i", "ci", "uninstall", "un", "remove", "rm", "update", "up", "add", "link", "publish", "exec", "x"]);
+const NPM_BLOCKED = new Set([
+  "install",
+  "i",
+  "ci",
+  "uninstall",
+  "un",
+  "remove",
+  "rm",
+  "update",
+  "up",
+  "add",
+  "link",
+  "publish",
+  "exec",
+  "x",
+]);
 const NPX_ALLOWED = new Set(["jest", "tsc"]);
 
 function gitSubcommand(seg) {
@@ -241,7 +304,10 @@ function devSegment(seg) {
   let s = seg;
   while (s.length && /^\w+=/.test(s[0])) s = s.slice(1); // FOO=bar kommando
   if (!s.length) return null;
-  const cmd = path.basename(s[0]).toLowerCase().replace(/\.exe$/, "");
+  const cmd = path
+    .basename(s[0])
+    .toLowerCase()
+    .replace(/\.exe$/, "");
   const args = s.slice(1);
   if (s.some(mentionsSecret)) return "filer med hemligheter (.env, *.pem, *.key)";
   if (SHELLS.has(cmd)) return `indirekt körning (${cmd})`;
@@ -249,21 +315,31 @@ function devSegment(seg) {
   if (NETWORK.has(cmd)) return `nätverksanrop (${cmd})`;
   if (DATABASE.has(cmd)) return `databas eller Docker (${cmd}) kräver godkännande`;
   if (INSTALLERS.has(cmd)) return `installation av beroenden (${cmd}) kräver godkännande`;
-  if ((cmd === "node" && args.some((a) => /^(-e|-p|--eval|--print)$/.test(a))) || (/^(python3?|py)$/.test(cmd) && args.includes("-c")))
+  if (
+    (cmd === "node" && args.some((a) => /^(-e|-p|--eval|--print)$/.test(a))) ||
+    (/^(python3?|py)$/.test(cmd) && args.includes("-c"))
+  )
     return "kod på kommandoraden (-e/-c)";
-  if (/^(python3?|py)$/.test(cmd) && args[0] === "-m" && args[1] === "pip") return "installation av beroenden (pip) kräver godkännande";
-  if (cmd === "find" && args.some((a) => /^-(exec|execdir|ok|okdir|delete)$/.test(a))) return "find med -exec eller -delete";
-  if (cmd === "sed" && args.some((a) => /^-i/.test(a) || a === "--in-place")) return "sed -i (ändra filer med Edit i stället)";
+  if (/^(python3?|py)$/.test(cmd) && args[0] === "-m" && args[1] === "pip")
+    return "installation av beroenden (pip) kräver godkännande";
+  if (cmd === "find" && args.some((a) => /^-(exec|execdir|ok|okdir|delete)$/.test(a)))
+    return "find med -exec eller -delete";
+  if (cmd === "sed" && args.some((a) => /^-i/.test(a) || a === "--in-place"))
+    return "sed -i (ändra filer med Edit i stället)";
   if (cmd === "git") {
     const { sub, args: gargs } = gitSubcommand(s);
-    if (sub && GIT_BLOCKED.has(sub)) return `git ${sub} kräver godkännande och görs inte av utvecklaren`;
-    if (sub === "branch" && gargs.some((a) => /^(-d|-D|-m|-M|--delete|--move|-f|--force)$/.test(a))) return "git branch som ändrar grenar";
+    if (sub && GIT_BLOCKED.has(sub))
+      return `git ${sub} kräver godkännande och görs inte av utvecklaren`;
+    if (sub === "branch" && gargs.some((a) => /^(-d|-D|-m|-M|--delete|--move|-f|--force)$/.test(a)))
+      return "git branch som ändrar grenar";
   }
   if (cmd === "npm") {
     if (NPM_BLOCKED.has(args[0])) return `npm ${args[0]} kräver godkännande`;
-    if (args[0] === "run" && (args[1] === "format" || /^db:/.test(args[1] || ""))) return `npm run ${args[1]} kräver godkännande`;
+    if (args[0] === "run" && (args[1] === "format" || /^db:/.test(args[1] || "")))
+      return `npm run ${args[1]} kräver godkännande`;
   }
-  if (cmd === "npx" && !NPX_ALLOWED.has(args[0])) return `npx ${args[0] || ""} är inte tillåtet (bara jest och tsc)`.trim();
+  if (cmd === "npx" && !NPX_ALLOWED.has(args[0]))
+    return `npx ${args[0] || ""} är inte tillåtet (bara jest och tsc)`.trim();
   return null;
 }
 
@@ -298,7 +374,11 @@ function relativeToProject(file, projectDir) {
   return process.platform === "win32" ? rel.toLowerCase() : rel;
 }
 
-const RIG_PROTECTED = [/^\.claude\/agents\//, /^\.claude\/hooks\/agent-guard/, /^\.claude\/settings(\.local)?\.json$/];
+const RIG_PROTECTED = [
+  /^\.claude\/agents\//,
+  /^\.claude\/hooks\/agent-guard/,
+  /^\.claude\/settings(\.local)?\.json$/,
+];
 
 function checkWrite(mode, file, projectDir) {
   if (typeof file !== "string" || file === "") return block("sökväg saknas");
@@ -308,12 +388,14 @@ function checkWrite(mode, file, projectDir) {
   if (mode === "plans-write") {
     // Jämför med originalets skiftläge för filnamnet, så att versaler upptäcks även på Windows.
     const name = path.basename(toNative(file));
-    if (rel && /^docs\/plans\/[^/]+$/.test(rel) && /^\d{2}-[a-z0-9]+(-[a-z0-9]+)*\.md$/.test(name)) return allow();
+    if (rel && /^docs\/plans\/[^/]+$/.test(rel) && /^\d{2}-[a-z0-9]+(-[a-z0-9]+)*\.md$/.test(name))
+      return allow();
     return block("planeraren får bara skriva docs/plans/NN-kort-namn.md");
   }
   // dev
   if (rel === null) return block("filen ligger utanför projektet");
-  if (RIG_PROTECTED.some((re) => re.test(rel))) return block("utvecklaren får inte ändra agenterna, agent-guard eller inställningarna");
+  if (RIG_PROTECTED.some((re) => re.test(rel)))
+    return block("utvecklaren får inte ändra agenterna, agent-guard eller inställningarna");
   return allow();
 }
 
@@ -328,13 +410,17 @@ function block(reason) {
 
 function decide(mode, input, projectDir) {
   if (!MODES.includes(mode)) return block(`okänt läge: ${mode}`);
-  if (!input || typeof input !== "object" || typeof input.tool_name !== "string") return block("indata saknar tool_name");
+  if (!input || typeof input !== "object" || typeof input.tool_name !== "string")
+    return block("indata saknar tool_name");
   const ti = input.tool_input && typeof input.tool_input === "object" ? input.tool_input : {};
   switch (input.tool_name) {
     case "Bash": {
       if (typeof ti.command !== "string") return block("kommando saknas");
       if (mode === "dev") return checkDev(ti.command);
-      return checkAllowlist(ti.command, mode === "checks" ? [...READ_RULES, ...CHECK_RULES] : READ_RULES);
+      return checkAllowlist(
+        ti.command,
+        mode === "checks" ? [...READ_RULES, ...CHECK_RULES] : READ_RULES,
+      );
     }
     case "Write":
     case "Edit":
@@ -343,10 +429,14 @@ function decide(mode, input, projectDir) {
       if (mode === "dev") return checkWrite(mode, ti.notebook_path, projectDir);
       return block("det här läget får inte ändra notebooks");
     case "Read":
-      return mentionsSecret(ti.file_path) ? block("filer med hemligheter (.env, *.pem, *.key)") : allow();
+      return mentionsSecret(ti.file_path)
+        ? block("filer med hemligheter (.env, *.pem, *.key)")
+        : allow();
     case "Glob":
     case "Grep":
-      return [ti.path, ti.pattern && input.tool_name === "Glob" ? ti.pattern : null, ti.glob].some(mentionsSecret)
+      return [ti.path, ti.pattern && input.tool_name === "Glob" ? ti.pattern : null, ti.glob].some(
+        mentionsSecret,
+      )
         ? block("filer med hemligheter (.env, *.pem, *.key)")
         : allow();
     default:
@@ -377,7 +467,9 @@ if (require.main === module) {
       result = block(`internt fel i agent-guard: ${err.message}`);
     }
     if (result.allow) process.exit(0);
-    process.stderr.write(`agent-guard (${mode}): blockerat: ${result.reason}. Redovisa i stället för att försöka på annat sätt.\n`);
+    process.stderr.write(
+      `agent-guard (${mode}): blockerat: ${result.reason}. Redovisa i stället för att försöka på annat sätt.\n`,
+    );
     process.exit(2);
   });
 }
