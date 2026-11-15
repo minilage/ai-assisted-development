@@ -49,7 +49,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 - Sessionsloggar för arbetet hittills skapade.
 - ESLint och TypeScript kontrollerade utan fel vid den första inventeringen.
 - Behörigheter konfigurerade i `.claude/settings.json` och testade (se Session 04).
-- Mätning per arbetsmoment: statusrad med ögonblicksbilder, hooks vid SessionEnd och SessionStart och `metrics/arbetsmoment.csv`. Testad med 16 automatiska tester och verifierad med ett riktigt `/clear` (se Session 06).
+- Mätning per arbetsmoment: statusrad med ögonblicksbilder, hooks vid SessionEnd och SessionStart och `metrics/arbetsmoment.csv`. Testad med 37 automatiska tester (21 för statusraden och 16 för hooken) och verifierad med ett riktigt `/clear` (se Session 06).
 - Metrics-hooken lämnar kvotfälten tomma i stället för 0 när mätningen började för sent. Rad 1 i `metrics/arbetsmoment.csv` är rättad (se Session 05).
 - Mätningen, Session 05 och Session 06 är granskade och committade (`9570363`).
 
@@ -58,7 +58,8 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 - Prettier rapporterade formateringsproblem i 15 befintliga filer.
 - Jest-testet för `GET /orders/1042/price` misslyckades: API:t svarade 404 i stället för förväntade 200. Orsaken behöver undersökas.
 - Skills och subagenter är ännu inte konfigurerade. Två hooks finns (SessionStart och SessionEnd för mätning). Hooks för sessionsminne, PreToolUse och automatiska kontroller återstår.
-- Mätningen har kända begränsningar: `statusline.js` saknar tester i repot, sessionsnamnet kan komma från samtalet och återupptagna sessioner är inte testade (se Session 06).
+- Mätningen har kända begränsningar: sessionsnamnet kan komma från samtalet och återupptagna sessioner är inte testade (se Session 06).
+- Testerna för `statusline.js` (`.claude/statusline.test.js`) och städningen av testkataloger i `.claude/hooks/record-metrics.test.js` är inte committade.
 - Behörighetsreglerna kan kringgås med kommandon i annan form eller skript som läser filer själva. Det ska täckas av en PreToolUse-hook.
 
 ### Nästa arbetsmoment

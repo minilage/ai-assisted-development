@@ -11,8 +11,15 @@ const { spawnSync } = require("child_process");
 const HOOK = path.join(__dirname, "record-metrics.js");
 const SECRET_TEXT = "HEMLIG_KONVERSATIONSTEXT_123";
 
+// Testkatalogerna tas bort när testerna är klara.
+const roots = [];
+process.on("exit", () => {
+  for (const r of roots) fs.rmSync(r, { recursive: true, force: true });
+});
+
 function sandbox() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rm-test-"));
+  roots.push(root);
   const dirs = {
     root,
     live: path.join(root, "live"),
