@@ -15,7 +15,7 @@ Riggen ska innehålla:
 
 - [x] Projektinstruktioner, projektplan och promptmall.
 - [x] Minst tre skills eller kommandon, varav ett för TDD.
-- [ ] Minst fyra subagenter med tydliga uppgifter.
+- [x] Minst fyra subagenter med tydliga uppgifter.
 - [ ] Minst fem hooks, inklusive hantering av sessionsminne.
 - [x] Behörigheter med allow, ask och deny.
 - [ ] Automatiska kontroller för kodstandard, formatering och typkontroll.
@@ -51,20 +51,47 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 - Behörigheter konfigurerade i `.claude/settings.json` och testade (se Session 04).
 - Mätning per arbetsmoment: statusrad med ögonblicksbilder, hooks vid SessionEnd och SessionStart och `metrics/arbetsmoment.csv`. Testad med 37 automatiska tester (21 för statusraden och 16 för hooken) och verifierad med ett riktigt `/clear` (se Session 06).
 - Metrics-hooken lämnar kvotfälten tomma i stället för 0 när mätningen började för sent. Rad 1 i `metrics/arbetsmoment.csv` är rättad (se Session 05).
-- Mätningen, Session 05 och Session 06 är granskade och committade (`9570363`). Testerna för statusraden och städningen av testkataloger är committade (`ebced5c`). Commitarna till och med `ebced5c` är pushade till `origin/main`.
+- Mätningen, Session 05 och Session 06 är granskade och committade (`9570363`). Testerna för statusraden och städningen av testkataloger är committade (`ebced5c`). De fyra skillsen och Session 07 är committade (`cd1afe6`). Commitarna till och med `cd1afe6` är pushade till `origin/main`. Session 08 med subagenter och `agent-guard` är inte committad.
+- Fyra subagenter i `.claude/agents/`, en per fas (se Session 08):
+
+  | Agent | Fas | Skill | `agent-guard` |
+  |---|---|---|---|
+  | `planerare` | Research och Plan | `planera` | `plans-write` |
+  | `utvecklare` | Build | `tdd` | `dev` |
+  | `granskare` | Review | `granska-standard` | `read` |
+  | `verifierare` | Verify | – | `checks` |
+
+  - Varje agent har en exakt lista över `tools`. Ingen agent har `Agent`, `Skill` eller `memory`.
+  - Alla fyra har strukturtester i `.claude/agents/agents.test.js` (10 tester) och är testade i riktiga körningar.
+  - `granskare` granskade `src/pricing/legacyPrice.ts` och `src/db.ts`. `verifierare` körde riggens tester och kodkontrollerna. `planerare` skrev `docs/plans/02-health-test.md`.
+- PreToolUse-hooken `.claude/hooks/agent-guard.js` begränsar agenterna:
+  - Den har 30 automatiska tester och 11 mutationer, som alla upptäcktes.
+  - Den har blockerat otillåtna åtgärder i riktiga agentkörningar i alla fyra lägena, med Bash, Write och Glob.
+  - Enligt beslutet räknas den som den tredje hooken i riggen, efter SessionStart och SessionEnd.
 
 ### Kända problem
 
-- Prettier rapporterade formateringsproblem i 15 befintliga filer.
+- Prettier rapporterade formateringsproblem i 15 befintliga filer. `npm run format:check` omfattar inte `.claude/`, och de flesta JS-filerna i riggen följer inte Prettier. Det hanteras i hook-momentet.
 - Jest-testet för `GET /orders/1042/price` misslyckades: API:t svarade 404 i stället för förväntade 200. En plan med troliga orsaker finns i `docs/plans/01-pris-endpoint-404.md`: `psycopg` saknas, och `python3` är en omdirigering. Planen väntar på godkännande.
 - Skills: alla fyra är skapade (`tdd`, `granska-standard`, `karakterisera` och `planera`) och har strukturtester i `.claude/skills/skills.test.js` (se Session 07). `granska-standard` och `planera` är också testade i praktiken. `tdd` och `karakterisera` testas vid den första riktiga uppgiften.
 - `pytest` och `psycopg` är inte installerade i Python 3.14, så `npm run test:legacy` går inte att köra. Installationen kräver godkännande.
 - Granskningen av `src/` med `granska-standard` hittade SQL-injektion i `src/legacy/price_calc.py:42`, anslutningssträngar med lösenord som standardvärde och felfall som saknar tester (se Session 07). Inget är rättat.
-- Subagenter är ännu inte konfigurerade. Två hooks finns (SessionStart och SessionEnd för mätning). Hooks för sessionsminne, PreToolUse och automatiska kontroller återstår.
+- Hooks: tre av fem finns: SessionStart och SessionEnd för mätning, och PreToolUse i form av `agent-guard` för subagenterna. Hooks för sessionsminne, automatiska kontroller och en PreToolUse-spärr för huvudsessionen återstår.
+- Begränsningar för subagenterna och `agent-guard` (se Session 08):
+  - Spärren bygger på mönster och är ingen sandlåda. Testkod och skript som körs kan göra vad som helst, och variabler tolkas inte.
+  - Hooken blockerar bara vid exit 2. Om `node` inte startar släpps anropet igenom.
+  - Hooks i frontmatter körs bara i en betrodd arbetsyta.
+  - Agenternas `permissionMode` ignoreras i auto mode.
+  - Claude Code kontrollerar Edit-anrop före hooken, och deny-reglerna gäller också före hooken. Därför är Edit-skyddet för riggens filer och spärren mot `.env` bara prövade i de automatiska testerna. Skyddet av riggens filer är visat i praktiken med Write.
+  - Nya agenter kräver att Claude Code startas om.
+  - Inte testat: att Claude Code självt väljer rätt agent, att agenter startar med `@agent-<namn>`, och en riktig Build med `utvecklare`.
+  - `karakterisera` kan inte läsas in i en agent och körs från huvudsessionen.
+  - `utvecklare` får inte ändra `.claude/agents/`, `agent-guard` eller inställningarna. Arbete med riggen görs därför i huvudsessionen.
+- `docs/plans/02-health-test.md` (test för `GET /health`) väntar på godkännande och svar på tre öppna frågor.
 - Mätningen har kända begränsningar: sessionsnamnet kan komma från samtalet och återupptagna sessioner är inte testade (se Session 06).
-- Behörighetsreglerna kan kringgås med kommandon i annan form eller skript som läser filer själva. Det ska täckas av en PreToolUse-hook.
+- Behörighetsreglerna kan kringgås med kommandon i annan form eller skript som läser filer själva. För subagenterna täcks det delvis av `agent-guard`. För huvudsessionen behövs fortfarande en PreToolUse-hook.
 
 ### Nästa arbetsmoment
 
-1. Skapa subagenter.
-2. Implementera hooks och testa de automatiska kontrollerna.
+1. Implementera de återstående hooks och testa de automatiska kontrollerna: sessionsminne, kodkontroller, en PreToolUse-spärr för huvudsessionen och Prettier för `.claude/`.
+2. Använda plan 02 som den första riktiga Build-uppgiften för `utvecklare`, med `granskare` och `verifierare`, när planen är godkänd.
