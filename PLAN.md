@@ -14,7 +14,7 @@ Tanken är att skapa ett gemensamt arbetssätt där AI-agenten får tydliga inst
 Riggen ska innehålla:
 
 - [x] Projektinstruktioner, projektplan och promptmall.
-- [ ] Minst tre skills eller kommandon, varav ett för TDD.
+- [x] Minst tre skills eller kommandon, varav ett för TDD.
 - [ ] Minst fyra subagenter med tydliga uppgifter.
 - [ ] Minst fem hooks, inklusive hantering av sessionsminne.
 - [x] Behörigheter med allow, ask och deny.
@@ -51,19 +51,20 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 - Behörigheter konfigurerade i `.claude/settings.json` och testade (se Session 04).
 - Mätning per arbetsmoment: statusrad med ögonblicksbilder, hooks vid SessionEnd och SessionStart och `metrics/arbetsmoment.csv`. Testad med 37 automatiska tester (21 för statusraden och 16 för hooken) och verifierad med ett riktigt `/clear` (se Session 06).
 - Metrics-hooken lämnar kvotfälten tomma i stället för 0 när mätningen började för sent. Rad 1 i `metrics/arbetsmoment.csv` är rättad (se Session 05).
-- Mätningen, Session 05 och Session 06 är granskade och committade (`9570363`).
+- Mätningen, Session 05 och Session 06 är granskade och committade (`9570363`). Testerna för statusraden och städningen av testkataloger är committade (`ebced5c`). Commitarna till och med `ebced5c` är pushade till `origin/main`.
 
 ### Kända problem
 
 - Prettier rapporterade formateringsproblem i 15 befintliga filer.
-- Jest-testet för `GET /orders/1042/price` misslyckades: API:t svarade 404 i stället för förväntade 200. Orsaken behöver undersökas.
-- Skills och subagenter är ännu inte konfigurerade. Två hooks finns (SessionStart och SessionEnd för mätning). Hooks för sessionsminne, PreToolUse och automatiska kontroller återstår.
+- Jest-testet för `GET /orders/1042/price` misslyckades: API:t svarade 404 i stället för förväntade 200. En plan med troliga orsaker finns i `docs/plans/01-pris-endpoint-404.md`: `psycopg` saknas, och `python3` är en omdirigering. Planen väntar på godkännande.
+- Skills: alla fyra är skapade (`tdd`, `granska-standard`, `karakterisera` och `planera`) och har strukturtester i `.claude/skills/skills.test.js` (se Session 07). `granska-standard` och `planera` är också testade i praktiken. `tdd` och `karakterisera` testas vid den första riktiga uppgiften.
+- `pytest` och `psycopg` är inte installerade i Python 3.14, så `npm run test:legacy` går inte att köra. Installationen kräver godkännande.
+- Granskningen av `src/` med `granska-standard` hittade SQL-injektion i `src/legacy/price_calc.py:42`, anslutningssträngar med lösenord som standardvärde och felfall som saknar tester (se Session 07). Inget är rättat.
+- Subagenter är ännu inte konfigurerade. Två hooks finns (SessionStart och SessionEnd för mätning). Hooks för sessionsminne, PreToolUse och automatiska kontroller återstår.
 - Mätningen har kända begränsningar: sessionsnamnet kan komma från samtalet och återupptagna sessioner är inte testade (se Session 06).
-- Testerna för `statusline.js` (`.claude/statusline.test.js`) och städningen av testkataloger i `.claude/hooks/record-metrics.test.js` är inte committade.
 - Behörighetsreglerna kan kringgås med kommandon i annan form eller skript som läser filer själva. Det ska täckas av en PreToolUse-hook.
 
 ### Nästa arbetsmoment
 
-1. Skapa och testa skills.
-2. Skapa subagenter.
-3. Implementera hooks och testa de automatiska kontrollerna.
+1. Skapa subagenter.
+2. Implementera hooks och testa de automatiska kontrollerna.
