@@ -71,7 +71,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Kända problem
 
-- Prettier rapporterade formateringsproblem i 15 befintliga filer i `src/` och `tests/`. Sedan steg 2 i hook-momentet omfattar `npm run format:check` också `.claude/**/*.js`. Riggens JS-filer är formaterade (Session 10), så kontrollen underkänner bara de 15.
+- Löst i Session 10: `npm run format:check` underkände de 15 `.ts`-filerna bara för radslut (CRLF i arbetskopian). `.prettierrc.json` har nu `"endOfLine": "auto"`, och `format:check` godkänns.
 - Jest-testet för `GET /orders/1042/price` misslyckades: API:t svarade 404 i stället för förväntade 200. En plan med troliga orsaker finns i `docs/plans/01-pris-endpoint-404.md`: `psycopg` saknas, och `python3` är en omdirigering. Planen väntar på godkännande.
 - Skills: alla fyra är skapade (`tdd`, `granska-standard`, `karakterisera` och `planera`) och har strukturtester i `.claude/skills/skills.test.js` (se Session 07). `granska-standard` och `planera` är också testade i praktiken. `tdd` och `karakterisera` testas vid den första riktiga uppgiften.
 - `pytest` och `psycopg` är inte installerade i Python 3.14, så `npm run test:legacy` går inte att köra. Installationen kräver godkännande.
@@ -93,5 +93,5 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Nästa arbetsmoment
 
-1. Hooks-momentet enligt `docs/plans/03-hooks.md` (godkänd). Steg 1, sessionsminne, är klart: byggt, testat och verifierat med `/clear` + `ready` och `/compact` (`.claude/hooks/session-memory.js`, se Session 09). Committat och pushat i `5e9832e`. Steg 2, Prettier för `.claude/`, är committat och pushat i `e0e8672`. Massformateringen av riggens 7 JS-filer är gjord och kontrollerad men inte committad (se Session 10). Stopp före steg 3 (kodkontroller) och steg 4 (spärr för huvudsessionen).
+1. Hooks-momentet enligt `docs/plans/03-hooks.md` (godkänd). Steg 1, sessionsminne, är klart: byggt, testat och verifierat med `/clear` + `ready` och `/compact` (`.claude/hooks/session-memory.js`, se Session 09). Committat och pushat i `5e9832e`. Steg 2, Prettier för `.claude/`, är committat och pushat i `e0e8672`. Massformateringen är committad och pushad i `a7ed197`. Steg 3, kodkontroller (`.claude/hooks/check-code.js`), är byggt med TDD och registrerat i `settings.json`. Radsluten är lösta (`"endOfLine": "auto"`). PostToolUse och Stop är verifierade i riktiga körningar i samma session, utan omstart. Inte committat (se Session 10). Därefter steg 4 (spärr för huvudsessionen).
 2. Använda plan 02 som den första riktiga Build-uppgiften för `utvecklare`, med `granskare` och `verifierare`, när planen är godkänd.
