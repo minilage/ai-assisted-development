@@ -51,7 +51,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 - Behörigheter konfigurerade i `.claude/settings.json` och testade (se Session 04).
 - Mätning per arbetsmoment: statusrad med ögonblicksbilder, hooks vid SessionEnd och SessionStart och `metrics/arbetsmoment.csv`. Testad med 16 automatiska tester och verifierad med ett riktigt `/clear` (se Session 06).
 - Metrics-hooken lämnar kvotfälten tomma i stället för 0 när mätningen började för sent. Rad 1 i `metrics/arbetsmoment.csv` är rättad (se Session 05).
-- Mätningen, Session 05 och Session 06 är granskade men inte committade.
+- Mätningen, Session 05 och Session 06 är granskade och committade (`9570363`).
 
 ### Kända problem
 
@@ -63,7 +63,6 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Nästa arbetsmoment
 
-1. Committa mätningen och Session 05–06 efter godkännande.
-2. Skapa och testa skills.
-3. Skapa subagenter.
-4. Implementera hooks och testa de automatiska kontrollerna.
+1. Skapa och testa skills.
+2. Skapa subagenter.
+3. Implementera hooks och testa de automatiska kontrollerna.
