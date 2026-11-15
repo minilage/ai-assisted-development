@@ -49,16 +49,21 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 - Sessionsloggar för arbetet hittills skapade.
 - ESLint och TypeScript kontrollerade utan fel vid den första inventeringen.
 - Behörigheter konfigurerade i `.claude/settings.json` och testade (se Session 04).
+- Mätning per arbetsmoment: statusrad med ögonblicksbilder, hooks vid SessionEnd och SessionStart och `metrics/arbetsmoment.csv`. Testad med 16 automatiska tester och verifierad med ett riktigt `/clear` (se Session 06).
+- Metrics-hooken lämnar kvotfälten tomma i stället för 0 när mätningen började för sent. Rad 1 i `metrics/arbetsmoment.csv` är rättad (se Session 05).
+- Mätningen, Session 05 och Session 06 är granskade men inte committade.
 
 ### Kända problem
 
 - Prettier rapporterade formateringsproblem i 15 befintliga filer.
 - Jest-testet för `GET /orders/1042/price` misslyckades: API:t svarade 404 i stället för förväntade 200. Orsaken behöver undersökas.
-- Skills, subagenter och hooks är ännu inte konfigurerade.
+- Skills och subagenter är ännu inte konfigurerade. Två hooks finns (SessionStart och SessionEnd för mätning). Hooks för sessionsminne, PreToolUse och automatiska kontroller återstår.
+- Mätningen har kända begränsningar: `statusline.js` saknar tester i repot, sessionsnamnet kan komma från samtalet och återupptagna sessioner är inte testade (se Session 06).
 - Behörighetsreglerna kan kringgås med kommandon i annan form eller skript som läser filer själva. Det ska täckas av en PreToolUse-hook.
 
 ### Nästa arbetsmoment
 
-1. Skapa och testa skills.
-2. Skapa subagenter.
-3. Implementera hooks och testa de automatiska kontrollerna.
+1. Committa mätningen och Session 05–06 efter godkännande.
+2. Skapa och testa skills.
+3. Skapa subagenter.
+4. Implementera hooks och testa de automatiska kontrollerna.
