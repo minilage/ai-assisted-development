@@ -17,7 +17,7 @@ Riggen ska innehålla:
 - [ ] Minst tre skills eller kommandon, varav ett för TDD.
 - [ ] Minst fyra subagenter med tydliga uppgifter.
 - [ ] Minst fem hooks, inklusive hantering av sessionsminne.
-- [ ] Behörigheter med allow, ask och deny.
+- [x] Behörigheter med allow, ask och deny.
 - [ ] Automatiska kontroller för kodstandard, formatering och typkontroll.
 - [ ] Sessionsloggar och versionshantering i Git.
 
@@ -48,16 +48,17 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 - `docs/prompt-template.md` skapad och granskad.
 - Sessionsloggar för arbetet hittills skapade.
 - ESLint och TypeScript kontrollerade utan fel vid den första inventeringen.
+- Behörigheter konfigurerade i `.claude/settings.json` och testade (se Session 04).
 
 ### Kända problem
 
 - Prettier rapporterade formateringsproblem i 15 befintliga filer.
 - Jest-testet för `GET /orders/1042/price` misslyckades: API:t svarade 404 i stället för förväntade 200. Orsaken behöver undersökas.
-- Skills, subagenter, hooks och behörigheter är ännu inte konfigurerade.
+- Skills, subagenter och hooks är ännu inte konfigurerade.
+- Behörighetsreglerna kan kringgås med kommandon i annan form eller skript som läser filer själva. Det ska täckas av en PreToolUse-hook.
 
 ### Nästa arbetsmoment
 
-1. Konfigurera behörigheter med allow, ask och deny.
-2. Skapa och testa skills.
-3. Skapa subagenter.
-4. Implementera hooks och testa de automatiska kontrollerna.
+1. Skapa och testa skills.
+2. Skapa subagenter.
+3. Implementera hooks och testa de automatiska kontrollerna.
