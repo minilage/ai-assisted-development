@@ -52,13 +52,12 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 ### Kända problem
 
 - Prettier rapporterade formateringsproblem i 15 befintliga filer.
-- Ett Jest-test har tidigare misslyckats och behöver undersökas.
+- Jest-testet för `GET /orders/1042/price` misslyckades: API:t svarade 404 i stället för förväntade 200. Orsaken behöver undersökas.
 - Skills, subagenter, hooks och behörigheter är ännu inte konfigurerade.
 
 ### Nästa arbetsmoment
 
-1. Granska ändringarna och göra en Git-commit.
-2. Konfigurera behörigheter med allow, ask och deny.
-3. Skapa och testa skills.
-4. Skapa subagenter.
-5. Implementera hooks och testa de automatiska kontrollerna.
+1. Konfigurera behörigheter med allow, ask och deny.
+2. Skapa och testa skills.
+3. Skapa subagenter.
+4. Implementera hooks och testa de automatiska kontrollerna.
