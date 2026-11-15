@@ -13,7 +13,7 @@ Tanken är att skapa ett gemensamt arbetssätt där AI-agenten får tydliga inst
 
 Riggen ska innehålla:
 
-- [ ] Projektinstruktioner och en plan för arbetet.
+- [x] Projektinstruktioner, projektplan och promptmall.
 - [ ] Minst tre skills eller kommandon, varav ett för TDD.
 - [ ] Minst fyra subagenter med tydliga uppgifter.
 - [ ] Minst fem hooks, inklusive hantering av sessionsminne.
@@ -36,3 +36,29 @@ Jag kommer att dela upp arbetet i mindre uppgifter och arbeta med en uppgift i t
 Efter varje steg ska resultatet kontrolleras och dokumenteras. Jag vill kunna se vilka filer som ändrats, vilka tester som körts och om något inte fungerade.
 
 Planen uppdateras under arbetets gång och används tillsammans med sessionsloggarna för att hålla reda på vad som är klart och vad som behöver göras härnäst.
+
+## Aktuell status
+
+**Senast uppdaterad:** 15 november 2026
+
+### Klart
+
+- Projektplan skapad.
+- `CLAUDE.md` skapad och använd vid ett första avgränsat arbetsmoment.
+- `docs/prompt-template.md` skapad och granskad.
+- Sessionsloggar för arbetet hittills skapade.
+- ESLint och TypeScript kontrollerade utan fel vid den första inventeringen.
+
+### Kända problem
+
+- Prettier rapporterade formateringsproblem i 15 befintliga filer.
+- Ett Jest-test har tidigare misslyckats och behöver undersökas.
+- Skills, subagenter, hooks och behörigheter är ännu inte konfigurerade.
+
+### Nästa arbetsmoment
+
+1. Granska ändringarna och göra en Git-commit.
+2. Konfigurera behörigheter med allow, ask och deny.
+3. Skapa och testa skills.
+4. Skapa subagenter.
+5. Implementera hooks och testa de automatiska kontrollerna.
