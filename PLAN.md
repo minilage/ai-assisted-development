@@ -51,7 +51,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 - Behörigheter konfigurerade i `.claude/settings.json` och testade (se Session 04).
 - Mätning per arbetsmoment: statusrad med ögonblicksbilder, hooks vid SessionEnd och SessionStart och `metrics/arbetsmoment.csv`. Testad med 37 automatiska tester (21 för statusraden och 16 för hooken) och verifierad med ett riktigt `/clear` (se Session 06).
 - Metrics-hooken lämnar kvotfälten tomma i stället för 0 när mätningen började för sent. Rad 1 i `metrics/arbetsmoment.csv` är rättad (se Session 05).
-- Mätningen, Session 05 och Session 06 är granskade och committade (`9570363`). Testerna för statusraden och städningen av testkataloger är committade (`ebced5c`). De fyra skillsen och Session 07 är committade (`cd1afe6`). Commitarna till och med `cd1afe6` är pushade till `origin/main`. Session 08 med subagenter och `agent-guard` är inte committad.
+- Mätningen, Session 05 och Session 06 är granskade och committade (`9570363`). Testerna för statusraden och städningen av testkataloger är committade (`ebced5c`). De fyra skillsen och Session 07 är committade (`cd1afe6`). Session 08 med subagenter och `agent-guard` är committad (`6b6ae2d`). Commitarna till och med `6b6ae2d` är pushade till `origin/main`.
 - Fyra subagenter i `.claude/agents/`, en per fas (se Session 08):
 
   | Agent | Fas | Skill | `agent-guard` |
@@ -93,5 +93,5 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Nästa arbetsmoment
 
-1. Implementera de återstående hooks och testa de automatiska kontrollerna: sessionsminne, kodkontroller, en PreToolUse-spärr för huvudsessionen och Prettier för `.claude/`.
+1. Hooks-momentet enligt `docs/plans/03-hooks.md` (godkänd). Steg 1, sessionsminne, är klart: byggt, testat och verifierat med `/clear` + `ready` och `/compact` (`.claude/hooks/session-memory.js`, se Session 09). Inte committat. Stopp före steg 2 (Prettier för `.claude/`), steg 3 (kodkontroller) och steg 4 (spärr för huvudsessionen).
 2. Använda plan 02 som den första riktiga Build-uppgiften för `utvecklare`, med `granskare` och `verifierare`, när planen är godkänd.
