@@ -35,6 +35,8 @@ Ingår inte:
 | Äldre modulen (Python) | `tests/legacy/test_<namn>.py` (pytest) | `python -m pytest tests/legacy/test_<namn>.py -q` | `npm run test:legacy` |
 | Riggen (`.claude/`) | `<fil>.test.js` (node:test) | `node --test <fil>.test.js` | samma kommando för alla berörda testfiler |
 
+Riggens hookskript, agenter och inställningar (`.claude/hooks/`, `.claude/agents/` och `.claude/settings*.json`) ändras bara i huvudsessionen. Agenten `utvecklare` är spärrad för dem av `agent-guard`, så när skillen körs i den agenten gäller den `src/`, `tests/`, `src/legacy/` och övriga delar av `.claude/`.
+
 Jest-testerna kräver testdatabasen. Den startas med `npm run db:up` och återställs med `npm run db:reset`. Båda kommandona kräver godkännande.
 
 ## Regler och begränsningar
@@ -58,7 +60,7 @@ Jest-testerna kräver testdatabasen. Den startas med `npm run db:up` och återst
 5. Upprepa steg 2–4 för nästa kriterium.
 6. **Hela sviten.** Kör sviten för den berörda delen, så att inget annat har gått sönder.
 7. **Kodkontroller** för TypeScript: `npm run lint`, `npm run typecheck` och `npm run format:check`.
-   - `format:check` rapporterade 15 filer redan innan riggen byggdes. Kontrollera att inga av de filer du har ändrat finns med i listan.
+   - `format:check` godkänns utan anmärkningar sedan Session 10 (`"endOfLine": "auto"`). Om den underkänner en fil: kontrollera om det är en fil du har ändrat, och redovisa annars utan att rätta.
 
 ## Förväntat resultat och format
 

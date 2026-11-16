@@ -54,7 +54,8 @@ Ingår inte:
   - indirekt körning (`bash -c`, `eval`, `xargs`, `node -e`, `python -c`),
   - `find -delete`, `sed -i` och omdirigering till fil.
 - Ändra filer med Edit och Write, inte via Bash. Ändringarna går då genom projektets behörigheter.
-- Du får inte ändra `.claude/agents/`, `agent-guard` eller `.claude/settings*.json`. Om steget kräver det: stoppa och redovisa.
+- Dessutom gäller `main-guard` från `.claude/settings.json` för alla dina anrop. Den spärrar hemliga filer, rekursiv borttagning, force-push, `git reset --hard`, `git clean` och `git rebase`.
+- Du får inte ändra `.claude/agents/`, något i `.claude/hooks/` (hookskripten och deras tester, till exempel `agent-guard` och `main-guard`) eller `.claude/settings*.json`. Om steget kräver det: stoppa och redovisa.
 - Om något blockeras: försök inte på annat sätt. Stoppa och redovisa vad som behövs, så att användaren kan besluta.
 - Jest kräver testdatabasen. Om den inte är startad: stoppa och redovisa. Starta den inte.
 - Använd parametriserad SQL, `Result` i tjänstelagret och inga flyttal för pengar. Lägg aldrig in hemligheter eller personuppgifter.
@@ -82,7 +83,7 @@ Stoppa när steget har gröna tester och kontrollerna har körts. Stoppa också 
 - ett test misslyckas av en orsak som du inte kan rätta inom steget,
 - steget kräver något som inte är godkänt,
 - testmiljön inte fungerar,
-- `agent-guard` blockerar något som steget behöver.
+- `agent-guard` eller `main-guard` blockerar något som steget behöver.
 
 Gör ingen commit.
 

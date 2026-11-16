@@ -1,6 +1,6 @@
 # Plan: Återstående hooks – sessionsminne, Prettier för riggen, kodkontroller och spärr för huvudsessionen
 
-**Status:** Utkast, väntar på godkännande
+**Status:** Godkänd och genomförd. Steg 1–4 är klara, committade och pushade: steg 1 i `5e9832e`, steg 2 i `e0e8672`, massformateringen i `a7ed197`, steg 3 i `991bd26` och steg 4 i `7564f3c`. Kända luckor i steg 4 finns i `sessions/session-11-2026-11-16.md`.
 **Datum:** 2026-11-15
 **Underlag:** `PLAN.md:19` ("Minst fem hooks, inklusive hantering av sessionsminne"), `PLAN.md:21` ("Automatiska kontroller för kodstandard, formatering och typkontroll"), `PLAN.md:74`, `PLAN.md:79`, `PLAN.md:92` och `PLAN.md:96` (nästa arbetsmoment 1). Uppdelningen i fyra steg och ordningen är redan beslutade av användaren i uppdraget till planeraren.
 
