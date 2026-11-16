@@ -1,7 +1,8 @@
 # Plan: Test för GET /health
 
-**Status:** Utkast, väntar på godkännande
-**Datum:** 2026-11-15
+**Status:** Godkänd och genomförd 2026-11-16. Build (`utvecklare`), Review (`granskare`, godkänd utan fynd) och Verify (`verifierare`, alla kontroller godkända) är klara. Se `sessions/session-12-2026-11-16.md`. Inte committad.
+**Datum:** 2026-11-15, uppdaterad 2026-11-16
+**Roll i projektet:** första riktiga testet av riggen (beslut 2026-11-16). `utvecklare` gör Build med `tdd`, `granskare` gör Review och `verifierare` gör Verify. Det är också första gången skillen `tdd` används i en riktig uppgift.
 **Underlag:** Granskningsfynd i `sessions/session-07-2026-11-15.md:244`: S16, Låg, `src/app.ts:8`, "`GET /health` saknar test". Uppdraget kommer från Session 08 (`sessions/session-08-2026-11-15.md:332`).
 
 ## Mål
@@ -12,6 +13,8 @@ Ingår inte:
 - att ändra `src/app.ts` eller någon annan produktionskod
 - de andra S16-fynden i Session 07 (`sessions/session-07-2026-11-15.md:241-242`) om saknade felfallstester för andra endpoints
 - att låta `/health` kontrollera databasen eller ändra svaret
+- att ändra några andra filer i `src/` eller `tests/`. De befintliga övningsfelen ska lämnas orörda (beslut 2026-11-16, `PLAN.md`, "Kända problem"). Den enda tillåtna ändringen är den nya filen `tests/health.test.ts`.
+- att kontrollera body i svaret (beslut om fråga 1)
 
 ## Research
 
@@ -44,7 +47,7 @@ Ingår inte:
 ## Acceptanskriterier
 
 1. **Givet** att API:t körs, **när** någon anropar `GET /health` utan headern `X-Customer-Id`, **så** blir svaret 200 (inte 401).
-2. **Givet** att API:t körs, **när** någon anropar `GET /health`, **så** har svaret `Content-Type` JSON och body `{ "status": "ok" }`. Gäller bara om användaren godkänner att body ska ingå i kontraktet (Öppna frågor, fråga 1).
+2. ~~**Givet** att API:t körs, **när** någon anropar `GET /health`, **så** har svaret `Content-Type` JSON och body `{ "status": "ok" }`.~~ **Struken** (beslut om fråga 1: nej). Body ingår inte i testet och inte i kontraktet.
 3. **Givet** att API:t körs, **när** en inloggad kund anropar `GET /health` med `X-Customer-Id: 1`, **så** blir svaret också 200.
 
 Felfallen 400, 403, 404 och 409 är inte möjliga för endpointen. 401 täcks av kriterium 1, som visar att den *inte* inträffar.
@@ -53,7 +56,7 @@ Felfallen 400, 403, 404 och 409 är inte möjliga för endpointen. 401 täcks av
 
 Skapa en ny testfil `tests/health.test.ts` med `supertest` och `createApp()`, enligt mönstret i `tests/customers.test.ts:1-5`. En separat fil gör att testet hålls avgränsat från kund- och beställningstesterna.
 
-Om användaren väljer att följa `docs/standard.md:34` bokstavligt används `beforeEach(resetDb)` och `afterAll(closeDb)`. Annars utelämnas `resetDb`, men `afterAll(closeDb)` behålls så att poolen stängs.
+`resetDb` utelämnas, men `afterAll(closeDb)` behålls så att poolen stängs (beslut om fråga 2: nej). Testfilen kräver alltså ingen databas. Avvikelsen från `docs/standard.md:34` är medveten, eftersom `/health` inte använder databasen.
 
 Bortvalda alternativ:
 - Lägga testet i `tests/customers.test.ts`: `/health` hör inte till kunder.
@@ -63,7 +66,7 @@ Bortvalda alternativ:
 
 | Fil | Ändring | Varför |
 |---|---|---|
-| `tests/health.test.ts` | ny | Testerna för kriterium 1-3 |
+| `tests/health.test.ts` | ny | Testerna för kriterium 1 och 3 |
 | `src/app.ts` | bara läst | Endpointen som testas |
 | `tests/customers.test.ts` | bara läst | Mönster för testfilen |
 | `tests/helpers/db.ts` | bara läst | `resetDb` och `closeDb` |
@@ -81,27 +84,27 @@ Inget. Ingen ändring av API-kontrakt, schema, beroenden, behörigheter eller bo
 | Kriterium | Test som skrivs först | Fil | Kommando |
 |---|---|---|---|
 | 1 | `it("returnerar 200 utan inloggning")`: `request(app).get("/health")`, `expect(res.status).toBe(200)` | `tests/health.test.ts` | `npm test -- tests/health.test.ts` |
-| 2 | `it("svarar med status ok")`: `expect(res.headers["content-type"]).toMatch(/json/)`, `expect(res.body).toEqual({ status: "ok" })` | `tests/health.test.ts` | `npm test -- tests/health.test.ts` |
+| 2 | Struken (fråga 1) | – | – |
 | 3 | `it("returnerar 200 med inloggning")`: `.set("X-Customer-Id", "1")`, `expect(res.status).toBe(200)` | `tests/health.test.ts` | `npm test -- tests/health.test.ts` |
 
-Eftersom testerna blir gröna direkt ska utvecklaren visa att de kan bli röda, utan att ändra produktionskod: tillfälligt ändra det förväntade värdet i testet (till exempel `toBe(201)`), köra och se att testet misslyckas, och sedan återställa. Det ska redovisas.
+Eftersom testerna blir gröna direkt ska utvecklaren visa att de kan bli röda, utan att ändra produktionskod: tillfälligt ändra det förväntade värdet i testet (till exempel `toBe(201)`), köra och se att testet misslyckas, och sedan återställa. Det ska redovisas. (Beslut om fråga 3: ja.)
 
 Därefter hela sviten: `npm test`. Kodkontroller: `npm run lint`, `npm run typecheck` och `npm run format:check`.
 
-Observera: `npm test` kör alla tester. Det kända felet för `GET /orders/1042/price` (`PLAN.md:59`, `docs/plans/01-pris-endpoint-404.md`) väntas fortfarande misslyckas och har inget med den här planen att göra.
+Observera: `npm test` kör alla tester och kräver testdatabasen för de andra testfilerna. Det kända felet för `GET /orders/1042/price` (`PLAN.md:77`, `docs/plans/01-pris-endpoint-404.md`) väntas fortfarande misslyckas och har inget med den här planen att göra.
 
 ## Risker
 
 | Risk | Sannolikhet | Konsekvens | Åtgärd |
 |---|---|---|---|
-| Testet låser body `{ status: "ok" }` som inte är dokumenterad | Medel | En framtida ändring av svaret bryter testet | Beslut i fråga 1 innan Build |
+| Testet låser body `{ status: "ok" }` som inte är dokumenterad | – | – | Bortfaller: body ingår inte (fråga 1) |
 | Jest hänger på öppna handtag om poolen inte stängs | Låg | Testkörningen avslutas inte | Behåll `afterAll(closeDb)` |
 | Testerna är gröna från början och bevisar därför mindre | Hög | Ett test som aldrig kan bli rött | Visa ett tillfälligt rött läge enligt testplanen |
-| Testet kräver databasen fast `/health` inte använder den, om `resetDb` används | Medel | Testet misslyckas när databasen inte kör | Beslut i fråga 2 |
+| Testet kräver databasen fast `/health` inte använder den, om `resetDb` används | – | – | Bortfaller: `resetDb` används inte (fråga 2) |
 
 ## Uppdelning i steg
 
-1. Skapa `tests/health.test.ts` med testerna för kriterium 1 och 3 (och 2 om fråga 1 besvaras ja). Bygg med `tdd`, granska med `granska-standard`, verifiera med `npm test -- tests/health.test.ts`, `npm test`, `npm run lint`, `npm run typecheck` och `npm run format:check`.
+1. Skapa `tests/health.test.ts` med testerna för kriterium 1 och 3. Bygg med `tdd`, granska med `granska-standard`, verifiera med `npm test -- tests/health.test.ts`, `npm test`, `npm run lint`, `npm run typecheck` och `npm run format:check`.
 
 Det är bara ett steg. Uppgiften är för liten för att delas upp mer.
 
@@ -110,3 +113,9 @@ Det är bara ett steg. Uppgiften är för liten för att delas upp mer.
 1. **Ska body ingå i testet?** Koden svarar `{ "status": "ok" }` (`src/app.ts:9`), men `docs/api.md:7` anger bara 200. Ja betyder att kriterium 2 ingår och att body i praktiken blir en del av kontraktet. Då bör `docs/api.md` uppdateras i ett separat, godkänt moment. Nej betyder att kriterium 2 stryks.
 2. **Ska testfilen återställa databasen?** `docs/standard.md:34` säger att testerna återställer testdatabasen före varje test, men `/health` använder ingen databas. Utan `resetDb` kan testet köras utan databas. Med `resetDb` följer det regeln bokstavligt.
 3. **Godtas att testet är grönt från början?** TDD kräver rött först (`tdd`). Förslaget är ett tillfälligt rött läge genom att ändra förväntat värde i testet, inte produktionskoden.
+
+**Beslut 2026-11-16 (användaren):**
+- **Fråga 1: nej.** Kriterium 2 är struket, och body testas inte.
+- **Fråga 2: nej.** Inget `resetDb`, men `afterAll(closeDb)` behålls.
+- **Fråga 3: ja.** Testerna får vara gröna från början, och ett tillfälligt rött läge visas genom att det förväntade värdet i testet ändras.
+- Plan 02 är det första riktiga testet av riggen, och `tests/health.test.ts` får skapas. De befintliga övningsfelen i `src/` och `tests/` lämnas orörda.

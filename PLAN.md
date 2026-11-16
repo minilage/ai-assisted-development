@@ -93,7 +93,11 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
   - Inte testat: att Claude Code självt väljer rätt agent, att agenter startar med `@agent-<namn>`, och en riktig Build med `utvecklare`.
   - `karakterisera` kan inte läsas in i en agent och körs från huvudsessionen.
   - `utvecklare` får inte ändra `.claude/agents/`, `agent-guard` eller inställningarna. Arbete med riggen görs därför i huvudsessionen.
-- `docs/plans/02-health-test.md` (test för `GET /health`) väntar på godkännande och svar på tre öppna frågor.
+- `docs/plans/02-health-test.md` (test för `GET /health`) är genomförd som det första riktiga testet av riggen (Session 12):
+  - `utvecklare` skapade `tests/health.test.ts` med 2 gröna tester, och ett underkänt läge visades per test.
+  - `granskare` godkände utan fynd, och `verifierare` godkände alla kontroller.
+  - Ingen annan fil i `src/` eller `tests/` är ändrad.
+  - Inte committad.
 - Mätningen har kända begränsningar: sessionsnamnet kan komma från samtalet och återupptagna sessioner är inte testade (se Session 06).
 - Behörighetsreglerna kan kringgås med kommandon i annan form eller skript som läser filer själva. För subagenterna täcks det delvis av `agent-guard`. För huvudsessionen behövs fortfarande en PreToolUse-hook.
 
@@ -102,4 +106,4 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 1. Hooks-momentet enligt `docs/plans/03-hooks.md` (godkänd). Steg 1, sessionsminne, är klart: byggt, testat och verifierat med `/clear` + `ready` och `/compact` (`.claude/hooks/session-memory.js`, se Session 09). Committat och pushat i `5e9832e`. Steg 2, Prettier för `.claude/`, är committat och pushat i `e0e8672`. Massformateringen är committad och pushad i `a7ed197`. Steg 3, kodkontroller (`.claude/hooks/check-code.js`), är byggt med TDD och registrerat i `settings.json`. Radsluten är lösta (`"endOfLine": "auto"`). PostToolUse och Stop är verifierade i riktiga körningar i samma session, utan omstart. Committat och pushat i `991bd26` (se Session 10).
    - Steg 4 (spärr för huvudsessionen, `main-guard.js`) är byggt med TDD, registrerat i `settings.json` och verifierat i en riktig körning, där alla provkommandon blockerades. Verify: 152 av 152 godkända. `RIG_PROTECTED` omfattar nu hela `.claude/hooks/` (se Session 11).
    - De tre fynden med allvarlighetsgrad medel från granskningen är rättade: 155 av 155 godkända och en ny riktig körning. Committat och pushat i `7564f3c`. Hooks-momentet (plan 03) är klart.
-2. Använda plan 02 som den första riktiga Build-uppgiften för `utvecklare`, med `granskare` och `verifierare`, när planen är godkänd.
+2. Plan 02 som den första riktiga Build-uppgiften för `utvecklare`, med `granskare` och `verifierare`: genomförd (Session 12). Commit väntar på godkännande.
