@@ -16,9 +16,9 @@ Riggen ska innehålla:
 - [x] Projektinstruktioner, projektplan och promptmall.
 - [x] Minst tre skills eller kommandon, varav ett för TDD.
 - [x] Minst fyra subagenter med tydliga uppgifter.
-- [ ] Minst fem hooks, inklusive hantering av sessionsminne.
+- [x] Minst fem hooks, inklusive hantering av sessionsminne.
 - [x] Behörigheter med allow, ask och deny.
-- [ ] Automatiska kontroller för kodstandard, formatering och typkontroll.
+- [x] Automatiska kontroller för kodstandard, formatering och typkontroll.
 - [ ] Sessionsloggar och versionshantering i Git.
 
 ## Arbeten som riggen ska användas till
@@ -39,7 +39,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ## Aktuell status
 
-**Senast uppdaterad:** 15 november 2026
+**Senast uppdaterad:** 16 november 2026
 
 ### Klart
 
@@ -76,7 +76,11 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 - Skills: alla fyra är skapade (`tdd`, `granska-standard`, `karakterisera` och `planera`) och har strukturtester i `.claude/skills/skills.test.js` (se Session 07). `granska-standard` och `planera` är också testade i praktiken. `tdd` och `karakterisera` testas vid den första riktiga uppgiften.
 - `pytest` och `psycopg` är inte installerade i Python 3.14, så `npm run test:legacy` går inte att köra. Installationen kräver godkännande.
 - Granskningen av `src/` med `granska-standard` hittade SQL-injektion i `src/legacy/price_calc.py:42`, anslutningssträngar med lösenord som standardvärde och felfall som saknar tester (se Session 07). Inget är rättat.
-- Hooks: tre av fem finns: SessionStart och SessionEnd för mätning, och PreToolUse i form av `agent-guard` för subagenterna. Hooks för sessionsminne, automatiska kontroller och en PreToolUse-spärr för huvudsessionen återstår.
+- Hooks: alla fem hookskript finns och är registrerade: `record-metrics.js`, `agent-guard.js`, `session-memory.js`, `check-code.js` och `main-guard.js` (Session 11). Räknat som funktioner är de 8.
+  - `main-guard` (PreToolUse för huvudsessionen) är aktiv och verifierad i en riktig körning, men inte committad.
+  - Granskningen gav 3 fynd med allvarlighetsgrad medel. De är rättade med TDD och verifierade (Session 11).
+  - Granskningen gav också 7 fynd med allvarlighetsgrad låg som inte är rättade, till exempel `-Path:.env` i PowerShell, förkortade git-flaggor och `--namespace`. De är dokumenterade som kända luckor i Session 11.
+  - Kraven på rad 19 (hooks) och 21 (automatiska kontroller) är avbockade efter beslut den 16 november 2026.
 - Begränsningar för subagenterna och `agent-guard` (se Session 08):
   - Spärren bygger på mönster och är ingen sandlåda. Testkod och skript som körs kan göra vad som helst, och variabler tolkas inte.
   - Hooken blockerar bara vid exit 2. Om `node` inte startar släpps anropet igenom.
@@ -93,5 +97,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Nästa arbetsmoment
 
-1. Hooks-momentet enligt `docs/plans/03-hooks.md` (godkänd). Steg 1, sessionsminne, är klart: byggt, testat och verifierat med `/clear` + `ready` och `/compact` (`.claude/hooks/session-memory.js`, se Session 09). Committat och pushat i `5e9832e`. Steg 2, Prettier för `.claude/`, är committat och pushat i `e0e8672`. Massformateringen är committad och pushad i `a7ed197`. Steg 3, kodkontroller (`.claude/hooks/check-code.js`), är byggt med TDD och registrerat i `settings.json`. Radsluten är lösta (`"endOfLine": "auto"`). PostToolUse och Stop är verifierade i riktiga körningar i samma session, utan omstart. Inte committat (se Session 10). Därefter steg 4 (spärr för huvudsessionen).
+1. Hooks-momentet enligt `docs/plans/03-hooks.md` (godkänd). Steg 1, sessionsminne, är klart: byggt, testat och verifierat med `/clear` + `ready` och `/compact` (`.claude/hooks/session-memory.js`, se Session 09). Committat och pushat i `5e9832e`. Steg 2, Prettier för `.claude/`, är committat och pushat i `e0e8672`. Massformateringen är committad och pushad i `a7ed197`. Steg 3, kodkontroller (`.claude/hooks/check-code.js`), är byggt med TDD och registrerat i `settings.json`. Radsluten är lösta (`"endOfLine": "auto"`). PostToolUse och Stop är verifierade i riktiga körningar i samma session, utan omstart. Committat och pushat i `991bd26` (se Session 10).
+   - Steg 4 (spärr för huvudsessionen, `main-guard.js`) är byggt med TDD, registrerat i `settings.json` och verifierat i en riktig körning, där alla provkommandon blockerades. Verify: 152 av 152 godkända. `RIG_PROTECTED` omfattar nu hela `.claude/hooks/` (se Session 11).
+   - De tre fynden med allvarlighetsgrad medel från granskningen är rättade: 155 av 155 godkända och en ny riktig körning. Väntar på godkännande av commit.
 2. Använda plan 02 som den första riktiga Build-uppgiften för `utvecklare`, med `granskare` och `verifierare`, när planen är godkänd.

@@ -18,22 +18,24 @@ Varje steg byggs med TDD (`node --test`), avslutas med en riktig körning och f�
 Ingår inte:
 - att formatera riggens befintliga JS-filer med `prettier --write` (öppen fråga 1)
 - de 15 befintliga filerna i `src/` och `tests/` med formateringsfel (`PLAN.md:74`)
-- att ändra `agent-guard.js`, agenterna, `record-metrics.js` eller `statusline.js`
+- att ändra `agent-guard.js`, agenterna, `record-metrics.js` eller `statusline.js`. Undantag: `RIG_PROTECTED` i `agent-guard.js` utökas i steg 4 (beslut om öppen fråga 8, 2026-11-16).
 - att lägga till `.claude/` i `npm run lint` eller `npm run typecheck`
 - commit och push
 
 ## Research
 
+**Om radnumren (uppdaterat 2026-11-16):** Research-avsnittet beskriver läget vid researchen, före steg 1. Hänvisningar till kod och konfiguration (`agent-guard.js`, `record-metrics.js`, `settings.json`, `agents.test.js` med flera) är kontrollerade och rättade till de nuvarande raderna efter massformateringen (`a7ed197`) och hooksen i steg 1 och 3. Hänvisningar till `PLAN.md` är inte ändrade. De gäller `PLAN.md` i commit `6b6ae2d`, som var den aktuella versionen vid researchen. Hänvisningarna till sessionsloggarna är kontrollerade och stämmer.
+
 ### Befintlig kod (verifierad)
 
-- **`.claude/settings.json:6-29`** har två hooks: `SessionEnd` (`:7-17`) kör `record-metrics.js end` och `SessionStart` (`:18-28`) kör `record-metrics.js start`. Ingen av dem har `matcher`. `statusLine` (`:2-5`) är ingen hook.
+- **`.claude/settings.json`** hade vid researchen två hooks (avsnittet `hooks` var då `:6-29`, nu `:6-73`): `SessionEnd` (`:7-17`) kör `record-metrics.js end` och `SessionStart` (`:18-28`) kör `record-metrics.js start`. Ingen av dem har `matcher`. `statusLine` (`:2-5`) är ingen hook.
 - **`.claude/settings.local.json`** innehåller inget `hooks`-avsnitt (sökning efter "hooks" gav ingen träff). Filen är ignorerad i Git (`.gitignore`).
-- **`.claude/hooks/record-metrics.js:19-20`:** hooken skriver aldrig till stdout, eftersom det vid SessionStart skulle hamna i kontexten, och avslutar alltid med kod 0 (`:361-366`). En ny SessionStart-hook som skriver till stdout krockar alltså inte med den. Filen anropar `main()` direkt när den läses in (`:361-365`) och kan inte läsas in med `require` i ett test.
+- **`.claude/hooks/record-metrics.js:19-20`:** hooken skriver aldrig till stdout, eftersom det vid SessionStart skulle hamna i kontexten, och avslutar alltid med kod 0 (`:379-384`). En ny SessionStart-hook som skriver till stdout krockar alltså inte med den. Filen anropar `main()` direkt när den läses in (`:379-383`) och kan inte läsas in med `require` i ett test.
 - **`.claude/hooks/agent-guard.js`:**
-  - `parse` (`:25-96`) delar upp ett kommando i delkommandon. Den returnerar `{ unsafe }` vid kommandosubstitution, backticks (`:49`), omdirigering till fil (`:80`), `<` (`:88`) och citattecken som inte stängs (`:92`). Då finns inga `segments` att analysera.
-  - `mentionsSecret` (`:118-129`) känner igen `.env`, `.env.*` utom `.env.example`, `*.pem` och `*.key`, även som glob.
-  - Båda exporteras (`:357`). Körningen ligger bakom `require.main === module` (`:359`), så filen kan läsas in av `main-guard.js` utan sidoeffekter.
-  - `RIG_PROTECTED` (`:301`) skyddar bara `.claude/agents/`, `.claude/hooks/agent-guard*` och `.claude/settings*.json` mot `utvecklare`. Nya hookskript som `main-guard.js` och `check-code.js` skyddas inte.
+  - `parse` (`:25-97`) delar upp ett kommando i delkommandon. Den returnerar `{ unsafe }` vid kommandosubstitution, backticks (`:50`), omdirigering till fil (`:81`), `<` (`:89`) och citattecken som inte stängs (`:93`). Då finns inga `segments` att analysera.
+  - `mentionsSecret` (`:118-130`) känner igen `.env`, `.env.*` utom `.env.example`, `*.pem` och `*.key`, även som glob.
+  - Båda exporteras (`:447`). Körningen ligger bakom `require.main === module` (`:449`), så filen kan läsas in av `main-guard.js` utan sidoeffekter.
+  - `RIG_PROTECTED` (`:377-381`) skyddar bara `.claude/agents/`, `.claude/hooks/agent-guard*` och `.claude/settings*.json` mot `utvecklare`. Nya hookskript som `main-guard.js` och `check-code.js` skyddas inte.
 - **Registreringen av `agent-guard`:** en gång per agent, i frontmatter under `hooks.PreToolUse`, med matcher `"Bash|Read|Grep|Glob|Write|Edit|NotebookEdit"`:
   - `.claude/agents/granskare.md:11-15`, läge `read`
   - `.claude/agents/planerare.md:11-15`, läge `plans-write`
@@ -41,7 +43,7 @@ Ingår inte:
   - `.claude/agents/verifierare.md:10-14`, läge `checks`
 
   Den finns inte i `settings.json`.
-- **`.claude/agents/agents.test.js:134-138`** kontrollerar att varje hookkommando som pekar på `.claude/hooks/*.js` pekar på en fil som finns. Den gäller agenternas frontmatter.
+- **`.claude/agents/agents.test.js:179-185`** kontrollerar att varje hookkommando som pekar på `.claude/hooks/*.js` pekar på en fil som finns. Den gäller agenternas frontmatter.
 - **`package.json:12-15`:** `lint` är `eslint src tests`, `typecheck` är `tsc --noEmit`, och `format` och `format:check` gäller `"src/**/*.ts" "tests/**/*.ts"`.
 - **`tsconfig.json`:** `include` omfattar `src`, `tests` och `scripts`, inte `.claude/`.
 - **`.prettierrc.json`:** `semi: true`, `singleQuote: false`, `printWidth: 100`, `trailingComma: "all"`.
@@ -81,9 +83,9 @@ För SessionStart räcker inte en lyckad körning efter `/clear` som bevis för 
 2. **Motsägelse om commit.** `PLAN.md:54` säger att Session 08 med subagenter och `agent-guard` inte är committad. `git log` visar commit `6b6ae2d` "Add four subagents with agent-guard PreToolUse hook", och `git show --stat 6b6ae2d` visar agenterna, `agent-guard.js`, testerna, `docs/plans/02-health-test.md` och `sessions/session-08-2026-11-15.md`. `PLAN.md` är alltså inte uppdaterad.
 3. **Olika sätt att räkna hooks.** `PLAN.md:70` och `:79` räknar `agent-guard` som en hook och kommer fram till "tre av fem". Räknat som registreringar finns redan sex (två i `settings.json` och fyra i frontmatter). Se avsnittet om antal hooks och öppen fråga 6.
 4. **"Kort" sammanfattning.** Hela "Aktuell status" är cirka 5 600 byte (`PLAN.md:40-97`) och innehåller redan "Nästa arbetsmoment". Om båda tas med ordagrant blir sammanfattningen varken kort eller fri från dubbletter. Se öppen fråga 3.
-5. **`parse` passar inte rakt av för huvudsessionen.** Den ger `unsafe` för `>`, `$(...)` och backticks (`agent-guard.js:49`, `:80`). I PowerShell är backtick ett escape-tecken. `main-guard` behöver ett eget beslut om vad som händer när `parse` inte kan dela upp kommandot. Se öppen fråga 7.
-6. **Nya hookskript skyddas inte mot `utvecklare`.** `RIG_PROTECTED` (`agent-guard.js:301`) omfattar inte `main-guard.js` och `check-code.js`. Se öppen fråga 8.
-7. **Falskt positivt i `agent-guard` under den här researchen.** `find .claude -name "*.js" -not -path "*/node_modules/*"` blockerades som "filer med hemligheter". Den sista delen av `*/node_modules/*` är `*`, och som glob matchar den `server.key` (`agent-guard.js:123-128`). Det påverkar inte planen, men samma sak händer om `main-guard` använder `mentionsSecret` på varje ord. Testerna i steg 4 ska ta med det fallet (kriterium 4.6).
+5. **`parse` passar inte rakt av för huvudsessionen.** Den ger `unsafe` för `>`, `$(...)` och backticks (`agent-guard.js:50`, `:81`). I PowerShell är backtick ett escape-tecken. `main-guard` behöver ett eget beslut om vad som händer när `parse` inte kan dela upp kommandot. Se öppen fråga 7.
+6. **Nya hookskript skyddas inte mot `utvecklare`.** `RIG_PROTECTED` (`agent-guard.js:377-381`) omfattar inte `main-guard.js` och `check-code.js`. Se öppen fråga 8.
+7. **Falskt positivt i `agent-guard` under den här researchen.** `find .claude -name "*.js" -not -path "*/node_modules/*"` blockerades som "filer med hemligheter". Den sista delen av `*/node_modules/*` är `*`, och som glob matchar den `server.key` (`agent-guard.js:125-129`). Det påverkar inte planen, men samma sak händer om `main-guard` använder `mentionsSecret` på varje ord. Testerna i steg 4 ska ta med det fallet (kriterium 4.6).
 8. **Kommentaren i `record-metrics.test.js:1`** är fel (se ovan). Den rättas inte i det här momentet.
 
 ### Antaganden (inte verifierade)
@@ -92,7 +94,7 @@ För SessionStart räcker inte en lyckad körning efter `/clear` som bevis för 
 - Att PreCompact-hookens utdata når Claude eller användaren. Det är okänt. Det prövas med `/compact` i steg 1.
 - Att PostToolUse med exit 2 visar stderr för Claude, och att Stop med exit 2 får Claude att fortsätta i stället för att stanna.
 - Att indata till Stop innehåller `stop_hook_active`.
-- Att verktyget i huvudsessionen heter `PowerShell` i hookens `tool_name`, som i behörighetsreglerna (`settings.json:89-97`).
+- Att verktyget i huvudsessionen heter `PowerShell` i hookens `tool_name`, som i behörighetsreglerna (`settings.json:90-99`).
 - Att det finns en gräns för hur mycket text en hook kan lägga in i kontexten. Storleken är inte känd.
 
 ## Antal hooks och hooktyper
@@ -194,30 +196,34 @@ Förslaget är att `PLAN.md` redovisar både funktionerna och hookskripten, och 
 
 4.1 **Givet** Bash- eller PowerShell-anrop som läser hemliga filer, **när** `main-guard.js` körs, **så** avslutar den med exit 2 och anger orsaken på stderr. Exempel: `cat .env`, `type .env`, `head config/.env.local`, `less .env`, `Get-Content .env`, `gc .env`, `cat server.key`.
 
-4.2 **Givet** rekursiv borttagning i andra former än deny-reglerna (`settings.json:126` och `:135`), **när** hooken körs, **så** blockeras anropet. Exempel: `rm -r -f x`, `rm -R -f x`, `rm --recursive --force x`, `rm -f -r x`, `Remove-Item -r x`, `Remove-Item x -Recurse -Force`, `ri -r x`, `rmdir /s x`.
+4.2 **Givet** rekursiv borttagning i andra former än deny-reglerna (`settings.json:170-171` och `:179`), **när** hooken körs, **så** blockeras anropet. Exempel: `rm -r -f x`, `rm -R -f x`, `rm --recursive --force x`, `rm -f -r x`, `Remove-Item -r x`, `Remove-Item x -Recurse -Force`, `ri -r x`, `rmdir /s x`.
 
-4.3 **Givet** force-push i andra former (`settings.json:119-122`), **när** hooken körs, **så** blockeras anropet. Exempel: `git push --force-with-lease`, `git push origin +main`, `git push -fu origin main`, `git -C . push -f`, `git --no-pager push --force`.
+4.3 **Givet** force-push i andra former (`settings.json:163-166` och `:173-175`), **när** hooken körs, **så** blockeras anropet. Exempel: `git push --force-with-lease`, `git push origin +main`, `git push -fu origin main`, `git -C . push -f`, `git --no-pager push --force`.
 
-4.4 **Givet** `git reset --hard` skrivet på andra sätt (`settings.json:123`), **när** hooken körs, **så** blockeras anropet. Exempel: `git -C . reset --hard`, `git --no-pager reset --hard`, `git -c x=y reset --hard`, `git reset HEAD~1 --hard`. Samma gäller `git clean -fdx` och `git -C . rebase`.
+4.4 **Givet** `git reset --hard` skrivet på andra sätt (`settings.json:167` och `:176`), **när** hooken körs, **så** blockeras anropet. Exempel: `git -C . reset --hard`, `git --no-pager reset --hard`, `git -c x=y reset --hard`, `git reset HEAD~1 --hard`. Samma gäller `git clean -fdx` och `git -C . rebase`.
 
 4.5 **Givet** Read, Grep eller Glob mot hemliga filer, **när** hooken körs, **så** blockeras anropet. `.env.example` tillåts.
 
 4.6 **Givet** tillåtna åtgärder i huvudsessionen, **när** hooken körs, **så** avslutar den med exit 0. Exempel: `git status`, `git push origin main` (behörigheterna ställer sedan frågan), `rm fil.txt` (behörigheterna ställer frågan), `npm run lint`, `cat .env.example`, `echo x > ut.txt`, `git reset --soft HEAD~1` och `find . -not -path "*/node_modules/*"` (fyndet ovan).
 
-4.7 **Givet** ett kommando som `parse` inte kan dela upp, till exempel med `$(...)`, backticks eller `>`, **när** hooken körs, **så** gäller regeln i öppen fråga 7. Kommandot blockeras i alla fall om råtexten nämner en hemlig fil eller innehåller ett av mönstren i 4.2–4.4.
+4.7 **Givet** ett kommando som `parse` inte kan dela upp, till exempel med `$(...)`, backticks eller `>`, **när** hooken körs, **så** tillåts det (beslut om öppen fråga 7: alternativ A). Kommandot blockeras om råtexten nämner en hemlig fil eller innehåller ett av mönstren i 4.2–4.4. Ett commit-meddelande som skickas med `$(...)` och nämner till exempel `git push --force` blockeras därför. Det är ett accepterat falskt positivt (beslut 2026-11-16), och ett test visar beteendet.
 
 4.8 **Givet** de verktygsanrop som varje agentläge tillåter i `agent-guard.test.js`, **när** `main-guard` körs på samma anrop, **så** tillåts de. Spärrarna krockar alltså inte.
 
-4.9 **Givet** indata utan `tool_name` eller med ogiltig JSON, **när** hooken körs, **så** blockeras anropet med exit 2, på samma sätt som `agent-guard.js:331` och `:366-371`.
+4.9 **Givet** indata utan `tool_name` eller med ogiltig JSON, **när** hooken körs, **så** blockeras anropet med exit 2, på samma sätt som `agent-guard.js:413-414` och `:456-461`.
 
 4.10 **Riktig körning.** **Givet** att steg 4 är byggt och aktivt, **när** Claude i huvudsessionen försöker köra ofarliga provkommandon, **så** blockeras de av `main-guard` och inte av behörighetsreglerna. Provkommandona får inte göra skada om spärren skulle missa, till exempel `cat finns-inte/.env`, `rm -r -f <scratchpad>/finns-inte`, `git push --force-with-lease finns-inte main` och `git -C <scratchpad>/inte-ett-arkiv reset --hard`. Meddelandet visar att det är `main-guard` som har blockerat. Ett tillåtet kommando som `git status` körs som vanligt.
+
+4.11 **Givet** läget `dev` i `agent-guard`, **när** `utvecklare` gör Write eller Edit av en fil i `.claude/hooks/` (till exempel `main-guard.js`, `check-code.js`, `session-memory.js`, `record-metrics.js` eller en testfil), **så** blockeras anropet. Write och Edit i `src/` och `tests/` tillåts som förut. (Beslut om öppen fråga 8: alternativ B, 2026-11-16.)
+
+4.12 **Givet** Write, Edit eller NotebookEdit mot en hemlig fil (`.env`, `.env.*`, `*.pem`, `*.key`), **när** `main-guard.js` körs, **så** blockeras anropet. `.env.example` tillåts. Deny-reglerna har bara `Edit(.env)` och `Edit(.env.*)`, inte Write. (Tillagt och godkänt 2026-11-16.)
 
 ## Lösning
 
 ### Steg 1: `.claude/hooks/session-memory.js`
 
 - Ett skript med två lägen som argument: `start` och `precompact`. Det har inga beroenden.
-- Rena funktioner exporteras, och körningen ligger bakom `require.main === module`, som i `agent-guard.js:357-359`:
+- Rena funktioner exporteras, och körningen ligger bakom `require.main === module`, som i `agent-guard.js:447-449`:
   - `extractSection(text, heading)`: avsnittet till nästa rubrik på samma nivå eller högre.
   - `latestSession(files)`: högst nummer i `session-NN-`.
   - `buildSummary({ plan, sessions, gitStatus, source })`
@@ -251,9 +257,10 @@ Förslaget är att `PLAN.md` redovisar både funktionerna och hookskripten, och 
 
 ### Steg 4: `.claude/hooks/main-guard.js`
 
-- `const { parse, mentionsSecret } = require("./agent-guard.js")`. `agent-guard.js` ändras inte.
+- `const { parse, mentionsSecret } = require("./agent-guard.js")`. Exporterna i `agent-guard.js` ändras inte. Den enda ändringen i `agent-guard.js` är `RIG_PROTECTED` (`:377-381`) och meddelandet (`:398`), enligt beslutet om öppen fråga 8.
 - En spärrlista, inte en lista över vad som är tillåtet. Huvudsessionen ska kunna göra allt som behörighetsreglerna tillåter eller frågar om. Bara det som deny-reglerna försöker stoppa, men missar i andra former, blockeras.
-- Delkommandon normaliseras med `path.basename`, gemener och utan `.exe`, som i `agent-guard.js:244`. Git-flaggor före underkommandot hoppas över, som i `agent-guard.js:227-238`. Den funktionen exporteras inte i dag och kopieras därför, eller så exporteras den i ett separat godkänt moment (öppen fråga 9).
+- Delkommandon normaliseras med `path.basename`, gemener och utan `.exe`, som i `agent-guard.js:307-310`. Git-flaggor före underkommandot hoppas över, som i `gitSubcommand` (`agent-guard.js:290-301`). Funktionen kopieras till `main-guard.js` med en hänvisning till originalet (beslut om öppen fråga 9: alternativ A). En gemensam modul kan föreslås senare.
+- När `parse` ger `unsafe` delas råtexten upp i ord vid blanksteg, citattecken, `$(`, `)` och backticks. Orden prövas mot hemliga filer, och texten prövas mot mönstren i 4.2–4.4 (beslut om öppen fråga 7: alternativ A).
 - För PowerShell: kortformer (`gc`, `ri`, `rm`, `del`, `rd`, `type`, `cat`) och flaggor som förkortats (`-r`, `-rec`, `-Recurse`). Matchningen görs utan hänsyn till skiftläge.
 - Utfall med `mentionsSecret`-falskt positivt för `*` (fynd 7): ord som börjar med `-` eller är argument till flaggor som `-path`, `-not` och `--exclude` prövas inte som filnamn. Exakt regel bestäms i Build och täcks av kriterium 4.6.
 - `settings.json`: `PreToolUse` med matcher `Bash|PowerShell|Read|Grep|Glob|Write|Edit|NotebookEdit` och `timeout` 10.
@@ -270,18 +277,18 @@ Förslaget är att `PLAN.md` redovisar både funktionerna och hookskripten, och 
 | `.claude/hooks/check-code.js` | ny (steg 3) | PostToolUse och Stop |
 | `.claude/hooks/check-code.test.js` | ny (steg 3) | Kriterium 3.1–3.12 |
 | `.claude/hooks/main-guard.js` | ny (steg 4) | PreToolUse för huvudsessionen |
-| `.claude/hooks/main-guard.test.js` | ny (steg 4) | Kriterium 4.1–4.9 |
+| `.claude/hooks/main-guard.test.js` | ny (steg 4) | Kriterium 4.1–4.9 och 4.12 |
 | `sessions/session-09-2026-11-15.md` (datum enligt dagen) | ny | Sessionslogg för momentet |
 | `PLAN.md` | ändrad efter varje godkänt steg | Status, antal hooks och rättelse av `PLAN.md:54` |
 | `.claude/hooks/record-metrics.js` | bara läst | Får inte gå sönder |
-| `.claude/hooks/agent-guard.js` | bara läst | `parse` och `mentionsSecret` återanvänds |
-| `.claude/hooks/agent-guard.test.js` | bara läst | Exempel på tillåtna anrop till kriterium 4.8 |
+| `.claude/hooks/agent-guard.js` | ändrad (steg 4): `RIG_PROTECTED` och meddelandet | `parse` och `mentionsSecret` återanvänds. Kriterium 4.11 |
+| `.claude/hooks/agent-guard.test.js` | ändrad (steg 4): nya fall för 4.11 | Exempel på tillåtna anrop till kriterium 4.8 |
 | `.claude/agents/*.md` | bara läst | Registreringen av `agent-guard` |
 | `eslint.config.js` | bara läst, eller ändrad om öppen fråga 2 besvaras så | ESLint för `.js` i riggen |
 | `.prettierrc.json`, `tsconfig.json` | bara lästa | Konfiguration för kontrollerna |
 | `metrics/arbetsmoment.csv` | skrivs av den befintliga hooken | Kontrolleras i kriterium 1.12 |
 
-Byggs i huvudsessionen och inte av `utvecklare`, eftersom `utvecklare` inte får ändra `settings.json` (`agent-guard.js:301`, `:316`, `PLAN.md:89`).
+Byggs i huvudsessionen och inte av `utvecklare`, eftersom `utvecklare` inte får ändra `settings.json` (`agent-guard.js:377-381`, `:397-398`, `PLAN.md:89`).
 
 ## Kräver separat godkännande
 
@@ -289,7 +296,7 @@ Byggs i huvudsessionen och inte av `utvecklare`, eftersom `utvecklare` inte får
 - **Behörigheter och säkerhetsinställningar, i mindre grad:** steg 1 och 3 ändrar `settings.json`. Hooksen spärrar inget, men PostToolUse och Stop med exit 2 påverkar hur Claude arbetar. Det godkänns med respektive steg.
 - **Massformatering** av riggens befintliga JS-filer med `prettier --write` (öppen fråga 1). Den är inte godkänd.
 - **`eslint.config.js`** om öppen fråga 2 besvaras med en ändring. Det är en ändring av projektets konfiguration som inte ingår i uppdraget.
-- **Ändring av `agent-guard.js`** om öppen fråga 8 eller 9 besvaras ja. Det är en säkerhetsinställning.
+- **Ändring av `agent-guard.js`** om öppen fråga 8 eller 9 besvaras ja. Det är en säkerhetsinställning. Godkänt 2026-11-16 för `RIG_PROTECTED` i steg 4a (fråga 8, alternativ B). Exporten (fråga 9) görs inte.
 - **Beroenden:** inga. `globals` ska inte läggas till i `package.json` utan godkännande.
 - **Borttagning av filer:** inga. Provfilerna i den riktiga körningen ligger i scratchpad.
 - **API-kontrakt och databasschema:** berörs inte.
@@ -334,10 +341,12 @@ Alla riggens tester körs med `node --test <fil>`, en fil i taget eller flera fi
 | 4.4 | Listan i 4.4: blockeras | samma | samma |
 | 4.5 | Read `.env`, Grep med `glob: ".env*"`, Glob `**/*.pem`: blockeras. Read `.env.example`: tillåts. | samma | samma |
 | 4.6 | Listan i 4.6: tillåts | samma | samma |
-| 4.7 | `echo $(cat .env)`, `` echo `cat .env` ``, och `git status > ut.txt`: enligt öppen fråga 7 | samma | samma |
+| 4.7 | `echo $(cat .env)` och `` echo `cat .env` ``: blockeras. `git status > ut.txt`: tillåts. Commit-meddelande med `$(...)` som nämner `git push --force`: blockeras (accepterat falskt positivt) | samma | samma |
 | 4.8 | Tillåtna anrop från `agent-guard.test.js` i alla fyra lägena körs genom `main-guard` och tillåts | samma | samma |
 | 4.9 | `spawnSync` med `inte json` och `{}`: exit 2 | samma | samma |
 | 4.10 | Riktig körning, se nedan | – | Provkommandona i 4.10 |
+| 4.11 | `decide("dev", Write/Edit av .claude/hooks/main-guard.js, check-code.js, session-memory.js, record-metrics.js och en testfil)`: blockeras. Write i `src/` och `tests/`: tillåts | `.claude/hooks/agent-guard.test.js` | `node --test .claude/hooks/agent-guard.test.js` |
+| 4.12 | Write, Edit och NotebookEdit av `.env`, `config/.env.local`, `server.key` och `cert.pem`: blockeras. Write av `.env.example`: tillåts | `.claude/hooks/main-guard.test.js` | `node --test .claude/hooks/main-guard.test.js` |
 
 Varje testfil skrivs före koden och körs först för att se att den underkänns (red) med en förväntad orsak, till exempel `Cannot find module`. Mutationer som i Session 08 föreslås för steg 4: till exempel att ta bort en regel och se att ett test underkänns.
 
@@ -392,7 +401,8 @@ Varje testfil skrivs före koden och körs först för att se att den underkänn
 | Provkommandon gör skada om spärren missar | Låg | Data försvinner | Bara sökvägar som inte finns och scratchpad (4.10) |
 | Hooks läses inte in utan omstart | Okänt | Den riktiga körningen visar fel resultat | Kontrollen med `/hooks` och omstart, och dokumentation |
 | Om `node` inte startar körs anropet utan spärr (`agent-guard.js:14-15`) | Låg | `main-guard` släpper igenom anropet | Dokumentera. Behörighetsreglerna gäller ändå. |
-| `utvecklare` kan ändra `main-guard.js` och `check-code.js` | Låg | Spärren kan försvagas av en agent | Öppen fråga 8. `Edit(.claude/**)` ligger under ask (`settings.json:100`), men Write omfattas inte av den regeln |
+| `utvecklare` kan ändra `main-guard.js` och `check-code.js` | Låg | Spärren kan försvagas av en agent | Öppen fråga 8, besvarad: `RIG_PROTECTED` utökas i steg 4 (4.11). `Edit(.claude/**)` ligger under ask (`settings.json:144`), men Write omfattas inte av den regeln |
+| Ett fel i `main-guard` blockerar alla anrop i huvudsessionen, även Edit av `main-guard.js` | Låg–medel | Claude kan inte rätta hooken | Steg 4 delas i 4a (bygga och testa, inget registreras) och 4b (registrering och riktig körning). Före registreringen körs det exakta hookkommandot med testdata. Användaren kan ta bort posten i `settings.json` eller stänga av hooken via `/hooks`. |
 
 ## Uppdelning i steg
 
@@ -401,7 +411,9 @@ Varje steg byggs i huvudsessionen med `tdd` (`node --test`), granskas med `grans
 1. **Sessionsminne.** `session-memory.js`, `session-memory.test.js` och två poster i `settings.json`. Riktig körning med `/clear`, `ready` och `/compact`. Kriterier 1.1–1.12.
 2. **Prettier för `.claude/`.** `package.json`, `format` och `format:check`. Riktig körning med `npm run format:check`. Massformateringen görs bara om öppen fråga 1 godkänns, och då som ett eget delsteg med md5 och `git diff --stat` före och efter, så att det syns att bara formateringen ändrades och att alla riggtester fortfarande går igenom. Kriterier 2.1–2.3.
 3. **Kodkontroller.** `check-code.js`, `check-code.test.js` och två poster i `settings.json`. Öppen fråga 2, 4 och 5 besvaras först. Kriterier 3.1–3.13.
-4. **Spärr för huvudsessionen.** Eget godkännande före Build. `main-guard.js`, `main-guard.test.js` och en post i `settings.json`. Kriterier 4.1–4.10.
+4. **Spärr för huvudsessionen.** Eget godkännande före Build. `main-guard.js`, `main-guard.test.js`, `RIG_PROTECTED` i `agent-guard.js` och en post i `settings.json`. Kriterier 4.1–4.12. Delas i två delar med ett stopp emellan (beslut 2026-11-16):
+   - **4a:** planen uppdateras, `RIG_PROTECTED` (4.11) och `main-guard.js` (4.1–4.9 och 4.12) byggs med TDD, och mutationerna körs. Inget registreras i `settings.json`. Godkänd 2026-11-16.
+   - **4b:** registreringen i `settings.json`, den riktiga körningen (4.10), Review med `granskare`, Verify med `verifierare` och dokumentationen. Kräver eget godkännande.
 
 Efter steg 4: `PLAN.md:19` och `PLAN.md:21` bockas av om allt är verifierat, och antalet hooks redovisas enligt tabellen ovan.
 
@@ -427,8 +439,11 @@ Efter steg 4: `PLAN.md:19` och `PLAN.md:21` bockas av om allt är verifierat, oc
    Förslag: (a), med tiden mätt i den riktiga körningen.
 6. **Hur ska hooks räknas i `PLAN.md`?** Som funktioner (8 efter steg 4), som hookskript (5) eller som händelsetyper (6)? Förslag: funktioner och hookskript redovisas båda, och kravet bockas av efter steg 4.
 7. **`main-guard` när `parse` ger `unsafe`.** I huvudsessionen är `>`, `$(...)` och backticks vanliga och tillåts av behörighetsreglerna eller ställs som frågor. Förslag: tillåt, men blockera om råtexten nämner en hemlig fil eller innehåller ett spärrat mönster. Alternativet är att blockera allt som inte kan tolkas, vilket gör att `agent-guard` och `main-guard` beter sig lika men stoppar mer.
-8. **Ska `RIG_PROTECTED` i `agent-guard.js:301` utökas** till `.claude/hooks/` så att `utvecklare` inte kan ändra `main-guard.js` och `check-code.js`? Det är en ändring av en säkerhetsinställning och ett eget moment. Förslag: ja, efter steg 4.
+   **Beslut 2026-11-16:** förslaget (A). Falska positiva för commit-meddelanden som nämner spärrade mönster accepteras (kriterium 4.7).
+8. **Ska `RIG_PROTECTED` i `agent-guard.js:377-381` utökas** till `.claude/hooks/` så att `utvecklare` inte kan ändra `main-guard.js` och `check-code.js`? Det är en ändring av en säkerhetsinställning och ett eget moment. Förslag: ja, efter steg 4.
+   **Beslut 2026-11-16:** ja, men i steg 4 och inte efter (B). Kriterium 4.11.
 9. **Ska `gitSubcommand` exporteras från `agent-guard.js`**, eller kopieras till `main-guard.js`? Export ändrar `agent-guard.js`, vilket inte ingår. Förslag: kopiera i steg 4 och föreslå en gemensam modul senare.
+   **Beslut 2026-11-16:** förslaget (A), kopiera.
 10. **Ska det finnas ett automatiskt test för skripten i `package.json` (2.1)?** Det skulle bli en ny testfil eller ett test i `check-code.test.js`, som inte finns förrän i steg 3. Förslag: manuell kontroll med `git diff package.json` i steg 2, och ett test i `check-code.test.js` i steg 3.
 11. **`PLAN.md:54` stämmer inte med Git** (commit `6b6ae2d` finns). Ska det rättas när `PLAN.md` uppdateras efter steg 1?
 12. **Provfil för den riktiga körningen i steg 3.** Var får den ligga? En ny fil i `src/` som tas bort efteråt kräver godkännande för borttagningen. Ett alternativ är att ändra en befintlig fil tillfälligt och återställa den med Edit, och kontrollera md5 före och efter.

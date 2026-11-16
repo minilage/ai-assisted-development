@@ -376,7 +376,7 @@ function relativeToProject(file, projectDir) {
 
 const RIG_PROTECTED = [
   /^\.claude\/agents\//,
-  /^\.claude\/hooks\/agent-guard/,
+  /^\.claude\/hooks\//,
   /^\.claude\/settings(\.local)?\.json$/,
 ];
 
@@ -395,7 +395,7 @@ function checkWrite(mode, file, projectDir) {
   // dev
   if (rel === null) return block("filen ligger utanför projektet");
   if (RIG_PROTECTED.some((re) => re.test(rel)))
-    return block("utvecklaren får inte ändra agenterna, agent-guard eller inställningarna");
+    return block("utvecklaren får inte ändra agenterna, hookskripten eller inställningarna");
   return allow();
 }
 

@@ -321,6 +321,34 @@ test("dev: Write och Edit tillåts i koden men inte för hemligheter eller rigge
   check("dev", edit(p(".claude", "settings.local.json")), false);
 });
 
+// Kriterium 4.11 i docs/plans/03-hooks.md: hela .claude/hooks/ skyddas, inte bara agent-guard.
+test("dev: inga hookskript eller hooktester i .claude/hooks/ får ändras", () => {
+  for (const name of [
+    "main-guard.js",
+    "main-guard.test.js",
+    "check-code.js",
+    "check-code.test.js",
+    "session-memory.js",
+    "record-metrics.js",
+    "record-metrics.test.js",
+    "ny-hook.js",
+  ]) {
+    check("dev", write(p(".claude", "hooks", name)), false);
+    check("dev", edit(p(".claude", "hooks", name)), false);
+  }
+  check(
+    "dev",
+    { tool_name: "NotebookEdit", tool_input: { notebook_path: p(".claude", "hooks", "x.ipynb") } },
+    false,
+  );
+  const { reason } = decide("dev", edit(p(".claude", "hooks", "main-guard.js")), PROJECT);
+  assert.match(reason, /hookskripten/, reason);
+  // Det som var tillåtet förut är fortfarande tillåtet.
+  check("dev", write(p("src", "pricing", "x.ts")), true);
+  check("dev", edit(p("tests", "helpers", "db.ts")), true);
+  check("dev", edit(p(".claude", "hooksx", "a.js")), true);
+});
+
 // --- Orsaken ska säga vad som stoppade kommandot (Session 08, steg 2) ---
 // "npm run lint -- --fix" gav tidigare "...inte tillåtet i det här läget: npm run lint", så det såg ut
 // som om vanliga npm run lint var spärrat.
