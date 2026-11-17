@@ -19,6 +19,11 @@ customers.get("/customers/me", requireCustomer, async (req, res) => {
 
 // Den inloggade kundens beställningar.
 customers.get("/customers/me/orders", requireCustomer, async (req, res) => {
-  const orders = await listOrdersForCustomer((req as AuthedRequest).customerId);
-  res.json(orders);
+  const { page, limit, status }: Record<string, unknown> = req.query;
+  const result = await listOrdersForCustomer((req as AuthedRequest).customerId, {
+    page,
+    limit,
+    status,
+  });
+  sendResult(res, result);
 });
