@@ -450,7 +450,7 @@ Den här delen bygger på de resultat Claude Code hittills har rapporterat. Stat
 | R04 | Genomfört | Fem hookskript och verifierade händelser |
 | R05 | Genomfört | Sessionsminne och tester av kontexthantering |
 | R06 | Genomfört | Behörighetsregler, agent-guard och main-guard |
-| R07 | Behöver kontrolleras | Skyddet mot att ta bort eller stänga av tester |
+| R07 | Uppfyllt (17 november 2026) | `test-guard.js` i `main-guard.js` och ask för `jest.config.js` och `pytest.ini`. ADR: `docs/adr/0001-testskydd-i-main-guard.md`. Bevis: Session 13 (riktiga körningar, 189 av 189 tester, mutationer 52 av 52 och 37 av 37). Commit `e3dbda2`. Kända begränsningar (M1, M2 med flera) är dokumenterade. |
 | R08 | Genomförs löpande | PLAN.md och sessionsloggar 01–12 |
 | R09 | Delvis | Fullständigt arbetsflöde för GET /health, men ingen av de valda user stories färdig |
 | R10 | Förberett | Granskningsskill och agent finns; tilldelad PR återstår |

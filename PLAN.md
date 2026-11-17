@@ -20,7 +20,7 @@ Riggen ska innehålla:
 - [x] Behörigheter med allow, ask och deny.
 - [x] Automatiska kontroller för kodstandard, formatering och typkontroll.
 - [ ] Sessionsloggar och versionshantering i Git.
-- [x] Skydd av tester (R07): `test-guard.js` i `main-guard.js`, ask för testkonfigurationen och ADR 0001. Verifierat i Session 13, inte committat.
+- [x] Skydd av tester (R07): `test-guard.js` i `main-guard.js`, ask för testkonfigurationen och ADR 0001. Verifierat i Session 13. Committat och pushat i `e3dbda2`.
 
 ## Arbeten som riggen ska användas till
 
@@ -126,5 +126,5 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
      - M1 (globmönster i `find -name`) och M2 (`xargs -I{}`) är dokumenterade och väntar på beslut.
    - **Steg 3:** `Edit(jest.config.js)` och `Edit(pytest.ini)` står under ask. Riktig körning: frågan visades och nekades.
    - **Steg 4:** `docs/adr/0001-testskydd-i-main-guard.md` finns.
-   - **Läget nu:** 189 av 189 i riggsviten, 52 av 52 mutationer för `main-guard` och 37 av 37 för `test-guard`. Inte committat (Session 13).
+   - **Läget nu:** 189 av 189 i riggsviten, 52 av 52 mutationer för `main-guard` och 37 av 37 för `test-guard`. Committat och pushat i `e3dbda2` (Session 13). M1, M2 och övriga kända begränsningar är dokumenterade, och användaren har godkänt att R07 avslutas med dem.
    - Inte inkopplad i `main-guard`. Inte committad.
