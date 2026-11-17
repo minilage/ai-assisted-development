@@ -10,6 +10,9 @@
 //   - rekursiv borttagning (rm -r, Remove-Item -Recurse, rmdir /s)
 //   - force-push (--force, -f, --force-with-lease, +refspec)
 //   - git reset --hard, git clean och git rebase, även med flaggor före underkommandot
+//   - testskyddet (R07, docs/plans/04-testskydd.md): Edit och Write som stänger av eller tar bort
+//     tester (regler i test-guard.js) och skalkommandon som tar bort eller flyttar testfiler
+//     (rm, mv, Remove-Item, Move-Item, git rm, git mv med flera). Gäller också subagenterna.
 // Allt annat lämnas till behörighetsreglerna, som tillåter, frågar eller nekar.
 //
 // Kommandon som parse inte kan dela upp ($(...), backticks, omdirigering) tillåts, men texten prövas
@@ -17,11 +20,35 @@
 // commit-meddelande via $(...) som nämner ett spärrat mönster blockeras därför. Det är ett
 // accepterat falskt positivt.
 //
+// Kända begränsningar i testskyddet för skalkommandon (granskningen av steg 2, låga fynd):
+//   - överskrivning med cp, Copy-Item, Clear-Content, truncate och omdirigering (> fil) fångas inte
+//   - flaggvärden med kolon prövas inte: Remove-Item -Path:tests\x.test.ts
+//   - git checkout -- tests/…, git restore och git stash kan ta bort tester som inte är
+//     committade. De blockeras inte här. I settings.json står alla tre under ask för Bash, men
+//     för PowerShell bara git checkout.
+//   - globmönster för testfiler känns inte igen: find . -name "*.test.*" -delete,
+//     find . -name "test_*" -delete och rm src/*.test.* (granskningen av steg 2b, M1)
+//   - xargs med platshållare: … | xargs -I{} rm {} (granskningen av steg 2b, M2)
+//   - find tests -exec git rm {} +, npx rimraf, shred -u och trash
+//   - pwsh -Command …, powershell -Command … och wsl rm … fångas inte (som bash -c och cmd /c)
+//   - falskt positivt: ett commit-meddelande via $(cat <<'EOF' …) som nämner en testfil och ett
+//     kommando som tar bort eller flyttar (rm, mv, move, del, git rm …), också direkt efter (,
+//     blockeras. git commit -F <fil> fungerar. testPathBefore sätts över ; och && och inte bara
+//     över pipes.
+//   - falskt positivt (varianten med ; i checkText): efter $(, en backtick eller ( börjar ett nytt
+//     delkommando. Flaggvärden som -name, --exclude och -Pattern som följer prövas då som
+//     filnamn för hemliga filer, så find "$(pwd)" -name "*.key" blockeras (tilläts i HEAD).
+//   - cd tests && rm x.test.js fångas (filnamnet), men cd tests && rm * inte
+//   - (rm x) i en subshell, cmd /c del och ForEach-Object { Remove-Item $_ } fångas inte
+//   - falskt positiva: ett delkommando som börjar med ett prefix räknar alla ord som kommandon,
+//     så env X=1 grep rm tests och time grep -rn rm tests blockeras
+//   - meddelandet säger "Spärren för huvudsessionen" också när en subagent stoppas
 // Begränsningar: spärren bygger på mönster och är ingen sandlåda. Skript, bash -c "..." och
 // variabler tolkas inte. Om hooken inte kan tolka indata blockeras anropet. Om node inte startar
 // alls får Claude Code ett vanligt hookfel och anropet blockeras INTE.
 "use strict";
 const { parse, mentionsSecret } = require("./agent-guard.js");
+const testGuard = require("./test-guard.js");
 
 const SECRET = "filer med hemligheter (.env, *.pem, *.key)";
 const REMOVE = "rekursiv borttagning (rm -r, Remove-Item -Recurse, rmdir /s)";
@@ -135,12 +162,81 @@ function isRecursiveArg(a) {
   return a.toLowerCase() === "/s"; // rmdir /s, rd /s, del /s
 }
 
+// --- Testskydd (R07, docs/plans/04-testskydd.md, steg 2) ---
+
+// Kommandon som tar bort eller flyttar filer. Ett argument som är en testfil eller en katalog som
+// heter tests blockeras. Det gäller bara på en kommandoposition, så att grep -rn rm tests inte
+// blockeras: första ordet, eller vilket ord som helst när delkommandot börjar med ett prefix
+// (sudo -u root, timeout 5, xargs), ett nyckelord (if, then, do, !, {) eller en tilldelning
+// (FOO=1). Steg 2b: find -delete/-exec och … | xargs rm eller … | Remove-Item, där testfilerna
+// väljs av find eller av ett tidigare delkommando.
+const FILE_REMOVE_MOVE = [
+  ...REMOVE_COMMANDS,
+  "unlink",
+  "mv",
+  "move",
+  "move-item",
+  "mi",
+  "ren",
+  "rename-item",
+  "rni",
+];
+const COMMAND_PREFIXES = [
+  "sudo",
+  "doas",
+  "env",
+  "xargs",
+  "nohup",
+  "command",
+  "time",
+  "exec",
+  "nice",
+  "timeout",
+  "stdbuf",
+];
+const SHELL_KEYWORDS = ["if", "then", "else", "elif", "do", "while", "until", "!", "{"];
+const FIND_RUNS = /^-(exec|execdir|ok|okdir)$/;
+const TEST_FILES =
+  "testskydd: borttagning eller flytt av testfiler. Agenten får ändra tester men inte ta bort " +
+  "eller stänga av dem (R07). Föreslå ändringen i stället, så kan användaren göra den själv om " +
+  "den behövs";
+
+function startsWithPrefix(seg) {
+  const w = seg[0];
+  return COMMAND_PREFIXES.includes(commandName(w)) || SHELL_KEYWORDS.includes(w) || /^\w+=/.test(w);
+}
+function atCommandPosition(seg, i) {
+  return i === 0 || startsWithPrefix(seg);
+}
+const isTestPathArg = (a) => !a.startsWith("-") && testGuard.isTestFile(a);
+const onlyFlags = (args) => args.every((a) => a.startsWith("-"));
+
+// find med -delete, eller -exec och liknande följt av ett kommando som tar bort eller flyttar.
+function findRemoves(args) {
+  return args.some(
+    (a, k) =>
+      a === "-delete" ||
+      (FIND_RUNS.test(a) && FILE_REMOVE_MOVE.includes(commandName(args[k + 1] || ""))),
+  );
+}
+
+// Testskyddet för ett ord som är ett kommando. testPathBefore: ett tidigare delkommando i samma
+// kommando nämner en testfil, och ett kommando utan sökväg kan då få filerna via en pipe.
+function testViolation(seg, i, cmd, testPathBefore) {
+  if (!atCommandPosition(seg, i)) return null;
+  const args = seg.slice(i + 1);
+  if (cmd === "find") return findRemoves(args) && args.some(isTestPathArg) ? TEST_FILES : null;
+  if (!FILE_REMOVE_MOVE.includes(cmd)) return null;
+  if (args.some(isTestPathArg) || (testPathBefore && onlyFlags(args))) return TEST_FILES;
+  return null;
+}
+
 // --- Kommandon ---
 
 // Varje ord i delkommandot prövas som början på ett kommando, så att sudo rm -rf x och
 // x=$(git push -f) också fångas. Underkommandot till git hoppas över, så att git rm -r inte
 // bedöms som rm -r.
-function segmentViolation(seg) {
+function segmentViolation(seg, testPathBefore = false) {
   if (segmentMentionsSecret(seg)) return SECRET;
   for (let i = 0; i < seg.length; i++) {
     const cmd = commandName(seg[i]);
@@ -149,17 +245,29 @@ function segmentViolation(seg) {
       const { sub, args, index } = gitSubcommand(rest);
       const v = gitViolation(sub, args);
       if (v) return v;
+      const removes = sub === "rm" || sub === "mv";
+      const hitsTests = args.some(isTestPathArg) || (testPathBefore && onlyFlags(args));
+      if (removes && atCommandPosition(seg, i) && hitsTests) return TEST_FILES;
       i += index;
     } else if (REMOVE_COMMANDS.includes(cmd) && seg.slice(i + 1).some(isRecursiveArg)) {
       return REMOVE;
+    } else {
+      const t = testViolation(seg, i, cmd, testPathBefore);
+      if (t) return t;
     }
   }
   return null;
 }
 
 // Texten utan citattecken, substitutioner och omdirigeringar, så att det som står inuti prövas.
-function loosen(cmd) {
+// Två varianter som båda prövas (granskningen av steg 2b, H1 och H2):
+//   - med mellanslag behålls sammanhanget: git push origin "$(…)" --force, rm $(ls tests)
+//   - med ; får ett kommando i en substitution en egen kommandoposition: echo $(rm tests/x)
+function loosenSpaces(cmd) {
   return cmd.replace(/\$\(|[`()<>"']/g, " ");
+}
+function loosenSplit(cmd) {
+  return cmd.replace(/\$\(|[`(]/g, " ; ").replace(/[)<>"']/g, " ");
 }
 
 // Windows-sökvägar med enhetsbokstav, till exempel C:\proj\.env.
@@ -178,15 +286,26 @@ function checkCommand(command, powershell) {
   return checkText(command);
 }
 
-function checkText(text) {
-  let parsed = parse(text);
-  if (parsed.unsafe) {
-    parsed = parse(loosen(text));
-    if (parsed.unsafe) return allow(); // bara "tomt kommando" är möjligt här
-  }
-  for (const seg of parsed.segments) {
-    const v = segmentViolation(seg);
+function checkSegments(segments) {
+  let testPathBefore = false;
+  for (const seg of segments) {
+    const v = segmentViolation(seg, testPathBefore);
     if (v) return block(v);
+    if (seg.slice(1).some(isTestPathArg)) testPathBefore = true;
+  }
+  return allow();
+}
+
+// Om parse inte kan dela upp texten prövas båda varianterna, och anropet blockeras om någon av
+// dem blockerar. En variant som fortfarande inte kan delas upp ("tomt kommando") hoppas över.
+function checkText(text) {
+  const parsed = parse(text);
+  if (!parsed.unsafe) return checkSegments(parsed.segments);
+  for (const loose of [loosenSpaces(text), loosenSplit(text)]) {
+    const p = parse(loose);
+    if (p.unsafe) continue;
+    const r = checkSegments(p.segments);
+    if (!r.allow) return r;
   }
   return allow();
 }
@@ -207,9 +326,17 @@ function decide(input) {
     case "PowerShell":
       if (typeof ti.command !== "string") return block("kommando saknas");
       return checkCommand(ti.command, input.tool_name === "PowerShell");
-    case "Write":
-    case "Edit":
-      return checkFile(ti.file_path);
+    case "Write": {
+      const secret = checkFile(ti.file_path);
+      return secret.allow ? testGuard.checkWrite(ti.file_path, ti.content) : secret;
+    }
+    case "Edit": {
+      const secret = checkFile(ti.file_path);
+      if (!secret.allow) return secret;
+      return testGuard.checkEdit(ti.file_path, ti.old_string, ti.new_string, {
+        replaceAll: ti.replace_all === true,
+      });
+    }
     case "NotebookEdit":
       return checkFile(ti.notebook_path);
     case "Read":

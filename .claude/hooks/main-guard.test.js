@@ -5,6 +5,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -23,6 +24,14 @@ const edit = (file_path) => ({
   tool_input: { file_path, old_string: "a", new_string: "b" },
 });
 const notebook = (notebook_path) => ({ tool_name: "NotebookEdit", tool_input: { notebook_path } });
+const writeWith = (file_path, content) => ({
+  tool_name: "Write",
+  tool_input: { file_path, content },
+});
+const editWith = (file_path, old_string, new_string, replace_all) => ({
+  tool_name: "Edit",
+  tool_input: { file_path, old_string, new_string, ...(replace_all ? { replace_all } : {}) },
+});
 const read = (file_path) => ({ tool_name: "Read", tool_input: { file_path } });
 const glob = (pattern, extra = {}) => ({ tool_name: "Glob", tool_input: { pattern, ...extra } });
 const grep = (pattern, extra = {}) => ({ tool_name: "Grep", tool_input: { pattern, ...extra } });
@@ -289,14 +298,19 @@ test("4.8: allt som agent-guard tillåter i något läge tillåts också av main
     }
   }
   assert.ok(compared > 50, `för få jämförelser: ${compared}`);
-  for (const f of [
-    p("src", "routes", "x.ts"),
-    p("tests", "orders.test.ts"),
-    p("docs", "plans", "02-x.md"),
-  ]) {
+  for (const f of [p("src", "routes", "x.ts"), p("docs", "plans", "02-x.md")]) {
     allowed(write(f));
     allowed(edit(f));
   }
+  // R07 (plan 04, steg 2, beslut 2026-11-17): för en testfil tillåts tillåtna ändringar, men
+  // Write med "x" skulle ta bort alla tester och blockeras av testskyddet.
+  const testFile = p("tests", "orders.test.ts");
+  const content = fs.readFileSync(testFile, "utf8");
+  const first = content.split(/\r?\n/)[0];
+  assert.equal(content.split(first).length, 2, "första raden ska vara unik");
+  allowed(writeWith(testFile, content + '\ntest("ny", () => {});\n'));
+  allowed(editWith(testFile, first, first + '\ntest("ny", () => {});'));
+  blocked(write(testFile));
 });
 
 // Granskningen 2026-11-16, fynd 2: korpusen ovan saknar \ inom citattecken och jämför inte Read,
@@ -363,6 +377,219 @@ test("4.12: Write, Edit och NotebookEdit mot hemliga filer blockeras, .env.examp
   allowed(notebook(p("notebooks", "x.ipynb")));
 });
 
+// --- R07: testskyddet (docs/plans/04-testskydd.md, steg 2) ---
+// Avstängningar byggs med sammanslagna strängar, så att filen inte blockerar sig själv.
+
+const SKIP_LINE = ["it", "skip"].join(".") + '("b", () => {});\n';
+
+function tmpTests(t) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "main-guard-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(dir, "tests"));
+  const file = path.join(dir, "tests", "a.test.ts");
+  fs.writeFileSync(file, 'const x = 1;\nit("a", () => {});\nit("c", () => {});\n');
+  return { dir, file };
+}
+
+test("R07 krit. 1, 3 och 4: Edit och Write som stänger av eller tar bort tester blockeras", (t) => {
+  const { dir, file } = tmpTests(t);
+  for (const input of [
+    editWith(file, "const x = 1;\n", "const x = 1;\n" + SKIP_LINE),
+    editWith(file, "const x = 1;\n", "const x = 1;\n// "),
+    editWith(file, 'it("c", () => {});\n', ""),
+    writeWith(file, 'it("a", () => {});\n'),
+    writeWith(path.join(dir, "tests", "ny.test.ts"), SKIP_LINE),
+  ]) {
+    blocked(input);
+    assert.match(decide(input).reason, /testskydd/);
+  }
+  assert.equal(
+    fs.readFileSync(file, "utf8"),
+    'const x = 1;\nit("a", () => {});\nit("c", () => {});\n',
+  );
+});
+
+test("R07: replace_all skickas vidare till testskyddet", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "main-guard-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(dir, "tests"));
+  const file = path.join(dir, "tests", "a.test.ts");
+  fs.writeFileSync(file, 'const a = 1;\nconst a = 1;\ntest("x", () => {});\n');
+  allowed(editWith(file, "const a = 1;\n", "const a = 1;\n// "));
+  blocked(editWith(file, "const a = 1;\n", "const a = 1;\n// ", true));
+});
+
+test("R07 krit. 5 och 6: tillåtna ändringar av tester och andra filer blockeras inte", (t) => {
+  const { dir, file } = tmpTests(t);
+  allowed(editWith(file, 'it("c", () => {});\n', 'it("c", () => {});\nit("d", () => {});\n'));
+  allowed(editWith(file, "const x = 1;", "const x = 2;"));
+  allowed(
+    writeWith(file, 'const x = 1;\nit("a", () => {});\nit("c", () => {});\nit("d", () => {});\n'),
+  );
+  allowed(writeWith(path.join(dir, "tests", "ny.test.ts"), 'it("a", () => {});\n'));
+  allowed(editWith(p("src", "app.ts"), "a", SKIP_LINE));
+  allowed(writeWith(p("docs", "x.md"), SKIP_LINE));
+});
+
+test("R07 krit. 7: borttagning och flytt av testfiler blockeras", () => {
+  for (const c of [
+    "rm tests/health.test.ts",
+    "rm -f tests/x.test.ts",
+    "rm tests",
+    "rm ./tests/helpers/db.ts",
+    "unlink tests/x.test.ts",
+    "mv tests/x.test.ts /tmp/x.ts",
+    "mv src/a.spec.js src/b.js",
+    "git rm tests/x.test.ts",
+    "git rm --cached tests/x.test.ts",
+    "git mv tests/a.test.ts tests/b.test.ts",
+    "cd src && rm a.test.ts",
+    "rm src/legacy/test_price.py",
+    "rm .claude/hooks/main-guard.test.js",
+    "sudo rm tests/x.test.ts",
+    "x=$(rm tests/x.test.ts)",
+  ]) {
+    blocked(bash(c));
+    assert.match(decide(bash(c)).reason, /testskydd/, c);
+  }
+  // Ett ord som bara är * blockeras redan av regeln för hemliga filer (känt falskt positivt).
+  blocked(bash("rm tests/*"));
+});
+
+test("R07 steg 2b, medel 2: prefix, nyckelord, tilldelning och substitution", () => {
+  for (const c of [
+    "FOO=1 rm tests/x.test.ts",
+    "sudo -u root rm tests/x.test.ts",
+    "nice -n 5 rm tests/x.test.ts",
+    "timeout 5 rm tests/x.test.ts",
+    "doas rm tests/x.test.ts",
+    "if rm tests/x.test.ts; then :; fi",
+    "true; then rm tests/x.test.ts",
+    "! rm tests/x.test.ts",
+    "{ rm tests/x.test.ts; }",
+    "while true; do rm tests/x.test.ts; done",
+    "echo $(rm tests/x.test.ts)",
+    "echo `rm tests/x.test.ts`",
+    "echo $(git rm tests/x.test.ts)",
+  ]) {
+    blocked(bash(c));
+    assert.match(decide(bash(c)).reason, /testskydd/, c);
+  }
+});
+
+test("R07 steg 2b, regression H1: substitution före flagga eller underkommando", () => {
+  // Granskningen av steg 2b: när $( blev ; hamnade argumenten efter substitutionen i ett eget
+  // delkommando. De här blockerades före R07 (HEAD) och ska fortfarande blockeras.
+  for (const c of [
+    'git push origin "$(git branch --show-current)" --force',
+    'git -C "$(pwd)" clean -fd',
+    'git -C "$(pwd)" rebase main',
+    'git reset "$(git rev-parse HEAD~1)" --hard',
+    'rm "$(pwd)/build" -rf',
+  ]) {
+    blocked(bash(c));
+  }
+  blocked(ps("Remove-Item $(Join-Path . build) -Recurse"));
+});
+
+test("R07 steg 2b, H2: testfiler som väljs i en substitution", () => {
+  for (const c of [
+    "rm $(git ls-files tests)",
+    'rm $(find tests -name "*.test.ts")',
+    "rm `ls tests/*.test.ts`",
+    "git rm $(git ls-files tests)",
+    "mv $(ls tests/*.test.ts) /tmp/",
+  ]) {
+    blocked(bash(c));
+    assert.match(decide(bash(c)).reason, /testskydd/, c);
+  }
+  blocked(ps("Remove-Item $(Get-ChildItem tests)"));
+});
+
+test("R07 steg 2b, medel 1: testfiler som väljs av find eller i ett tidigare delkommando", () => {
+  for (const c of [
+    'find tests -name "*.test.ts" -delete',
+    "find tests -exec rm {} +",
+    'find . -name "*.test.ts" -exec rm -f {} +',
+    "find tests -execdir mv {} /tmp +",
+    "ls tests/*.test.ts | xargs rm",
+    "ls tests/*.test.ts | xargs -0 rm -f",
+    "git ls-files tests | xargs git rm",
+  ]) {
+    blocked(bash(c));
+    assert.match(decide(bash(c)).reason, /testskydd/, c);
+  }
+  for (const c of [
+    "Get-ChildItem tests -Filter *.test.ts | Remove-Item",
+    "Get-ChildItem tests | Remove-Item -Force",
+    "gci tests | ri",
+  ]) {
+    blocked(ps(c));
+    assert.match(decide(ps(c)).reason, /testskydd/, c);
+  }
+});
+
+test("R07 steg 2b: tillåtna kommandon med find, pipelines och ord som rm", () => {
+  for (const c of [
+    'find tests -name "*.test.ts"',
+    'find src -name "*.tmp" -delete',
+    "find tests -exec cat {} +",
+    "echo rm tests",
+    "ls tests | wc -l",
+    "git log --oneline -- tests | head -5",
+    "cat tests/health.test.ts | grep rm",
+    "ls tests; rm tmp.txt",
+    "grep -rn rm tests",
+    "FOO=1 npx jest tests/health.test.ts",
+    "if npx jest tests/health.test.ts; then echo ok; fi",
+  ]) {
+    allowed(bash(c));
+  }
+  allowed(ps("Get-ChildItem tests | Select-Object Name"));
+  for (const c of [
+    "Remove-Item tests/x.test.ts",
+    "Remove-Item -Path tests\\x.test.ts -Force",
+    "ri tests\\x.test.ts",
+    "del tests\\x.test.ts",
+    "erase tests\\x.test.ts",
+    "Move-Item tests\\x.test.ts x.ts",
+    "mi tests\\x.test.ts x.ts",
+    "move tests\\x.test.ts x.ts",
+    "ren tests\\x.test.ts y.ts",
+    "Rename-Item tests\\x.test.ts y.ts",
+    "rni tests\\x.test.ts y.ts",
+    "rd tests",
+    "rmdir tests",
+    "Remove-Item C:\\Dev\\proj\\tests\\x.test.ts",
+  ]) {
+    blocked(ps(c));
+    assert.match(decide(ps(c)).reason, /testskydd/, c);
+  }
+});
+
+test("R07 krit. 8: kommandon som läser eller kör tester och borttagning av andra filer tillåts", () => {
+  for (const c of [
+    "ls tests",
+    "cat tests/health.test.ts",
+    "npx jest tests/health.test.ts",
+    "node --test .claude/hooks/test-guard.test.js",
+    "git diff -- tests",
+    "git log -- tests",
+    "git status --short -- src tests",
+    "rm tmp.txt",
+    "mv a.txt b.txt",
+    "git rm src/gammal.ts",
+    "grep -rn rm tests",
+    "git log --grep rm -- tests",
+    'echo "mv tests" > /dev/null',
+  ]) {
+    allowed(bash(c));
+  }
+  for (const c of ["Get-ChildItem tests", "Remove-Item tmp.txt", "Move-Item a.txt b.txt"]) {
+    allowed(ps(c));
+  }
+});
+
 // --- 4.9: indata som inte går att tolka ---
 
 test("4.9: indata utan tool_name eller kommando blockeras", () => {
@@ -389,6 +616,32 @@ test("process: blockerad åtgärd ger exit 2 och visar att main-guard har blocke
   assert.equal(r.status, 2);
   assert.match(r.stderr, /^main-guard: blockerat: /);
   assert.match(r.stderr, /rekursiv/);
+});
+
+test("R07 steg 3: ändringar av testkonfigurationen kräver godkännande (ask)", () => {
+  const settings = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "settings.json"), "utf8"));
+  const { allow, ask, deny } = settings.permissions;
+  for (const rule of ["Edit(jest.config.js)", "Edit(pytest.ini)"]) {
+    assert.ok(ask.includes(rule), `${rule} ska stå under ask`);
+    assert.ok(!allow.includes(rule) && !deny.includes(rule), `${rule} ska bara stå under ask`);
+  }
+  // package.json, där test-skriptet finns, står redan under ask.
+  assert.ok(ask.includes("Edit(package.json)"));
+});
+
+test("R07 process: testskyddet ger exit 2 och meddelande från main-guard", (t) => {
+  const { file } = tmpTests(t);
+  for (const input of [
+    editWith(file, "const x = 1;\n", "const x = 1;\n" + SKIP_LINE),
+    writeWith(file, ""),
+    bash("rm tests/health.test.ts"),
+  ]) {
+    const r = run(JSON.stringify(input));
+    assert.equal(r.status, 2, `${JSON.stringify(input)}: ${r.stderr}`);
+    assert.match(r.stderr, /^main-guard: blockerat: testskydd: /);
+  }
+  const ok = run(JSON.stringify(editWith(file, "const x = 1;", "const x = 2;")));
+  assert.equal(ok.status, 0, ok.stderr);
 });
 
 test("4.9 process: ogiltig JSON, tom indata och {} ger exit 2", () => {

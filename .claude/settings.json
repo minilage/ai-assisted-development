@@ -156,6 +156,8 @@
       "Edit(.claude/**)",
       "Edit(package.json)",
       "Edit(package-lock.json)",
+      "Edit(jest.config.js)",
+      "Edit(pytest.ini)",
       "Edit(requirements.txt)",
       "Edit(db/**)",
       "Edit(scripts/**)",

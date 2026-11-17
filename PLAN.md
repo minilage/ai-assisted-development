@@ -20,6 +20,7 @@ Riggen ska innehålla:
 - [x] Behörigheter med allow, ask och deny.
 - [x] Automatiska kontroller för kodstandard, formatering och typkontroll.
 - [ ] Sessionsloggar och versionshantering i Git.
+- [x] Skydd av tester (R07): `test-guard.js` i `main-guard.js`, ask för testkonfigurationen och ADR 0001. Verifierat i Session 13, inte committat.
 
 ## Arbeten som riggen ska användas till
 
@@ -97,7 +98,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
   - `utvecklare` skapade `tests/health.test.ts` med 2 gröna tester, och ett underkänt läge visades per test.
   - `granskare` godkände utan fynd, och `verifierare` godkände alla kontroller.
   - Ingen annan fil i `src/` eller `tests/` är ändrad.
-  - Inte committad.
+  - Committad och pushad i `b2647f9`.
 - Mätningen har kända begränsningar: sessionsnamnet kan komma från samtalet och återupptagna sessioner är inte testade (se Session 06).
 - Behörighetsreglerna kan kringgås med kommandon i annan form eller skript som läser filer själva. För subagenterna täcks det delvis av `agent-guard`. För huvudsessionen behövs fortfarande en PreToolUse-hook.
 
@@ -106,4 +107,24 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 1. Hooks-momentet enligt `docs/plans/03-hooks.md` (godkänd). Steg 1, sessionsminne, är klart: byggt, testat och verifierat med `/clear` + `ready` och `/compact` (`.claude/hooks/session-memory.js`, se Session 09). Committat och pushat i `5e9832e`. Steg 2, Prettier för `.claude/`, är committat och pushat i `e0e8672`. Massformateringen är committad och pushad i `a7ed197`. Steg 3, kodkontroller (`.claude/hooks/check-code.js`), är byggt med TDD och registrerat i `settings.json`. Radsluten är lösta (`"endOfLine": "auto"`). PostToolUse och Stop är verifierade i riktiga körningar i samma session, utan omstart. Committat och pushat i `991bd26` (se Session 10).
    - Steg 4 (spärr för huvudsessionen, `main-guard.js`) är byggt med TDD, registrerat i `settings.json` och verifierat i en riktig körning, där alla provkommandon blockerades. Verify: 152 av 152 godkända. `RIG_PROTECTED` omfattar nu hela `.claude/hooks/` (se Session 11).
    - De tre fynden med allvarlighetsgrad medel från granskningen är rättade: 155 av 155 godkända och en ny riktig körning. Committat och pushat i `7564f3c`. Hooks-momentet (plan 03) är klart.
-2. Plan 02 som den första riktiga Build-uppgiften för `utvecklare`, med `granskare` och `verifierare`: genomförd (Session 12). Commit väntar på godkännande.
+2. Plan 02 som den första riktiga Build-uppgiften för `utvecklare`, med `granskare` och `verifierare`: genomförd (Session 12). Committad och pushad i `b2647f9`.
+3. R07, skydd av tester, enligt `docs/plans/04-testskydd.md` (godkänd 16 november 2026):
+   - **Steg 1:** `.claude/hooks/test-guard.js` och testfilen är byggda med TDD. 13 av 13 godkända och 168 av 168 i hela riggsviten. 21 av 21 mutationer upptäckta. 0 blockeringar vid uppspelning av 20 historiska ändringar av testfiler.
+   - **Review:** godkänd med anmärkningar (1 hög, 3 medel och 7 låg).
+   - **Steg 1b:** fynden med hög och medel och tre låga är rättade med TDD. 17 av 17 godkända, 172 av 172 i riggsviten, 33 av 33 mutationer upptäckta och 0 blockeringar vid uppspelningen.
+   - **Review av 1b:** godkänd med anmärkningar (0 hög, 1 medel och 6 låg).
+   - **Steg 1c:** CRLF-normaliseringen, testerna för ersättaren och de kända luckorna, med avvägningen för villkorliga avstängningar, är dokumenterade. 20 av 20 godkända, 175 av 175 i riggsviten och 36 av 36 mutationer upptäckta. Vid uppspelningen gav historiken 0 falskt positiva, och i CRLF-filerna blockerades 16 av 16 bortkommenteringar.
+   - **Review av 1c:** godkänd med anmärkningar (0 hög, 0 medel och 5 låg). Fynden är rättade i början av steg 2.
+   - **Steg 2:** `test-guard` är inkopplad i `main-guard` (17 november 2026), och **testskyddet är aktivt**.
+     - Tester: 25 av 25 i `main-guard` och 22 av 22 i `test-guard`, och riggsviten 183 av 183.
+     - Mutationer: 41 av 41 för `main-guard` och 37 av 37 för `test-guard`.
+     - Riktig körning: alla otillåtna försök blockerades i huvudsessionen och för `utvecklare`, och md5 för testfilerna är oförändrad.
+     - Verify är godkänd.
+     - Review: godkänd med anmärkningar (0 hög, 2 medel och 7 låg).
+   - **Steg 2b:** medelfynden (pipelines, `find` och kommandopositioner) är rättade. De låga fynden är dokumenterade som kända begränsningar.
+     - Review av 2b: underkänd (H1 var en regression i force-push/clean/rebase/reset och rekursiv borttagning med `$(…)`, och H2 gällde `rm $(…)`). Båda är rättade med regressionstester.
+     - M1 (globmönster i `find -name`) och M2 (`xargs -I{}`) är dokumenterade och väntar på beslut.
+   - **Steg 3:** `Edit(jest.config.js)` och `Edit(pytest.ini)` står under ask. Riktig körning: frågan visades och nekades.
+   - **Steg 4:** `docs/adr/0001-testskydd-i-main-guard.md` finns.
+   - **Läget nu:** 189 av 189 i riggsviten, 52 av 52 mutationer för `main-guard` och 37 av 37 för `test-guard`. Inte committat (Session 13).
+   - Inte inkopplad i `main-guard`. Inte committad.
