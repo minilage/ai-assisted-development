@@ -6,7 +6,7 @@
 **Gjort av:** `granskare` med `granska-standard`. Fynden är kontrollerade av huvudsessionen enligt avsnittet "Kontroll av fynden".
 **Begränsning:** PR:n på GitHub är inte öppnad ännu (`gh` saknas). Granskningen gäller grenens diff, som blir PR:ns innehåll. Inga tester eller kontroller kördes under granskningen, och inget ändrades, slogs ihop eller stängdes under den. Rättningarna av F1 och F2 gjordes efteråt (se "Åtgärder efter granskningen"). Resten av dokumentet beskriver läget vid granskningen, om inget annat anges.
 
-**Verdikt: godkänd med anmärkningar.** Implementationen är korrekt vid läsning: parametriserad SQL, rätt källa för kund-id, stabil sortering, validering som tål arrayer och objekt, och dokumenterat kontrakt. Det finns inget bekräftat fel som kräver att PR:n stoppas. F1 och F2 bedömdes böra rättas före sammanslagning och är nu rättade. F3 kräver ett beslut.
+**Verdikt: godkänd med anmärkningar.** Implementationen är korrekt vid läsning: parametriserad SQL, rätt källa för kund-id, stabil sortering, validering som tål arrayer och objekt, och dokumenterat kontrakt. Inget fel som R09 har introducerat kräver att PR:n stoppas. F1 och F2 bedömdes böra rättas före sammanslagning och är nu rättade. **F3 är en bekräftad, allvarlig sårbarhet som fanns i kodbasen före R09** (en header kan stoppa API:t). Den kräver ett beslut, men ligger utanför R09:s ändringar.
 
 ## Kontroll av fynden (huvudsessionen)
 
@@ -14,7 +14,7 @@
 |---|---|---|
 | F1 | `grep createdAt tests` | 0 träffar. Bekräftat. |
 | F2 | `git rev-list --count main..HEAD` | 6 commits. Sessionsloggen säger fyra, `PLAN.md` fem. Bekräftat. |
-| F3 | Läste `src/auth.ts:7-16` och `src/app.ts`. Node är v24.14.0 och Express 4.22.3. | Ingen int4-gräns på `X-Customer-Id` och ingen felhanterare finns. Själva krashen är **inte provkörd**: ett försök blockerades av `main-guard` (kommandot nämnde `.env`) och jag försökte inte kringgå det. |
+| F3 | Läste `src/auth.ts:7-16` och `src/app.ts`. Node är v24.14.0 och Express 4.22.3. | Ingen int4-gräns på `X-Customer-Id` och ingen felhanterare finns. Krashen var vid första kontrollen **inte provkörd**: ett försök blockerades av `main-guard` (kommandot nämnde `.env`) och jag försökte inte kringgå det. Den provkördes senare, se "F3: bevis". |
 | F8 | `src/services/customerService.ts:6` | `createdAt: string`. `pg` ger `Date` för `TIMESTAMPTZ`. Bekräftat vid läsning. |
 
 ## Åtgärder efter granskningen (17 november 2026)
@@ -35,6 +35,7 @@ Verifiering efter åtgärderna: se avsnittet "Verifiering efter åtgärderna" l�
 ### Bekräftade fel
 | ID | Område | Allvar | Fil:rad | Vad och varför | Rekommendation | Kontroll som kunde fånga det |
 |---|---|---|---|---|---|---|
+| F3 (**bekräftat med körning**, se nedan) | Säkerhet (DoS) | **hög**, fanns redan före R09 | `src/auth.ts:9-10`, `src/routes/customers.ts:23`, `src/services/customerService.ts:79-86`, `src/app.ts` | `X-Customer-Id: 99999999999` passerar `requireCustomer` (heltal > 0, ingen int4-gräns) och skickas mot `customer_id INTEGER`. Postgres kastar `out of range for type integer` (kod `22003`). Handlern är `async` i Express 4 och det finns ingen felhanterare, så avvisningen blir en oavfångad promise-rejection och **Node 24 avslutar hela processen**. En oautentiserad klient kan ta ned API:t med ett anrop. Samma mekanism gäller varje databasfel i en `async`-handler. | Error-middleware och wrappa async-handlers (eller Express 5), int4-gräns i `requireCustomer`, och ett test för `X-Customer-Id: 99999999999` (förväntat 401). | Jest-test (saknas), `no-floating-promises`/`no-misused-promises`. **Delvis automatisk**. Ändringen rör behörighet och felkontrakt och kräver godkännande. |
 | F1 (**rättat**, se åtgärder) | Testtäckning | medel | `tests/customers.test.ts` (hela filen), `src/services/customerService.ts:80` | Ingen assertion kontrollerar elementens form `{ id, status, createdAt }`. Om `AS "createdAt"` tas bort (S2) förblir alla 39 tester gröna, och kontraktet bryts utan att något märks. Mutationslistan i Session 14 saknar den mutationen. | Test med `expect(items[0]).toEqual({ id, status, createdAt: expect.any(String) })`. | Jest-test (saknas). **Automatisk** med nytt test. |
 | F2 (**rättat**, se åtgärder) | Dokumentation | låg | `sessions/session-14-2026-11-17.md:5,60,69-72`, `PLAN.md` (R09-punkten), `docs/plans/05-sidindelning-orders.md:3` | Antalet commits står olika på olika ställen (fyra, fem och fyra hashar). Grenen har sex. Loggen säger också att `PLAN.md` inte är uppdaterad, men den är det. Spårbarheten blir missvisande. | Skriv "se `git log`" i stället för hårdkodade antal. | **Manuell** granskning (eller en konsistenskontroll i CI). |
 | F6 (godtagen) | Testtäckning | låg | `tests/customers.test.ts` | Valideringsfall utan test: tom `page=`/`limit=`, `status[a]=b`, `page[a]=1`, `+1`, `1e3`, `0x10`, Unicode-siffror, `page=9007199254740991` och `9007199254740992`. `COUNT`-frågan är inte mutationstestad separat. Gränsen mot int8 (ADR 0002) är helt olåst. | `it.each` med dessa värden. | Jest-test. **Automatisk** med nya tester. |
@@ -42,10 +43,42 @@ Verifiering efter åtgärderna: se avsnittet "Verifiering efter åtgärderna" l�
 | F9 | Struktur | låg | `src/auth.ts:11`, `src/result.ts:2`, `src/http.ts:5-10` | `requireCustomer` skickar `unauthorized` direkt med `res.status(401)`, och koden finns inte i `ErrorCode` eller `STATUS`. Två vägar för felsvar (S7/S8). Ligger utanför diffen, men `docs/api.md` lovar 401 utan att beskriva felkoden. | Lägg `unauthorized: 401` i `ErrorCode` och `STATUS`, och använd `sendError`. | ESLint `no-restricted-syntax` mot `res.status(` utanför `http.ts`. **Automatisk** med ny regel. |
 | F10 | Struktur | låg | `src/services/customerService.ts:40-76`, `src/routes/customers.ts:22-27` | HTTP-parsning av `unknown` sker i servicelagret. `parseInteger` är lokal, medan `parseId` i `src/routes/orders.ts:9` gör nästan samma sak med andra regler (`Number()` godtar `"1e3"` och `"0x10"`). | En gemensam hjälpfunktion om fler endpoints behöver den. | **Manuell** (kodduplicering), eventuellt `jscpd`. |
 
+#### F3: vad som fanns före R09 och vad R09 ändrar
+
+| | Före R09 (`e3dbda2`) | R09 (PR:n) |
+|---|---|---|
+| **Sårbarheten** | Finns: `src/auth.ts:9-10` saknar int4-gräns, och `src/app.ts` saknar felhanterare för `async`-handlers. Det gäller varje route som ger ett databasfel. Att äldre kod (`GET /customers/me/orders` före R09, `GET /customers/me`) har samma fel är **läst i koden men inte provkört**. | **Introduceras inte och rättas inte.** Ingen R09-fil rör `auth.ts` eller `app.ts`. |
+| **Den nya endpointen** | Samma fråga `WHERE customer_id = $1` fanns redan i en enkel form. | `listOrdersForCustomer` (`customerService.ts:79-92`) ärver felet och kör nu **två** frågor på samma oskyddade väg. Ett anrop räcker ändå, så R09 gör inte krashen allvarligare, men den ligger på R09:s yta. |
+| **Bedömning** | Fyndet ska läggas på kodbasen, inte på R09-författaren. | PR:n bör inte stoppas av F3, men F3 bör åtgärdas separat (kräver godkännande: behörighet och felkontrakt). |
+
+#### F3: bevis (körning 18 november 2026)
+
+Provet gjordes av huvudsessionen, isolerat och utan att ändra några projektfiler, mot grenens oförändrade kod (`bb55e6d`). Skripten ligger i scratchpad och är inte incheckade. Det är ett **manuellt prov, inte ett Jest-test**, och ett sådant test finns fortfarande inte (se rekommendationen).
+
+Reproduktion:
+1. Starta `createApp()` från `src/app.ts` i en egen Node-process på en ledig port (provet använde 3999), med `DATABASE_URL` inställd på testdatabasen `butik_test` och **utan** någon `unhandledRejection`-hanterare.
+2. `GET /customers/me/orders` med `X-Customer-Id: 1`.
+3. `/health`.
+4. `GET /customers/me/orders` med `X-Customer-Id: 99999999999`.
+5. `/health` igen.
+
+| Steg | Observerat |
+|---|---|
+| 2. Giltigt id | HTTP 200 med `items`, `page`, `limit` och `total` |
+| 3. `/health` | HTTP 200 (servern lever) |
+| 4. **Id utanför int4** | **Anslutningen bröts utan svar** (`curl` exit 56, HTTP 000) |
+| 5. `/health` | Inget svar (processen nere) |
+| Processen | `exit code=1`. Utdata: `error: value "99999999999" is out of range for type integer`, Postgres-kod `22003`, stack `listOrdersForCustomer (customerService.ts:79)` och `customers.ts:23`. |
+
+Att notera:
+- Node v24.14.0, Express 4.22.3, `pg` 8.23.
+- Ett första försök anslöt av misstag till den tomma databasen `butik` (jag satte `DATABASE_URL` efter importerna, som körs först). Då krashade redan ett **giltigt** anrop processen med `relation "orders" does not exist`. Det var ett fel i provet och inget fynd, men det visar att mekanismen gäller varje databasfel och inte bara int4-fallet.
+- Det körande API:t på port 3000 rördes inte. Ingen databas skrevs till. `git status` var ren och `HEAD` var oförändrad efter provet.
+- Inget Jest-test kördes för F3 och ingen rättning gjordes.
+
 ### Risker (ej bekräftade)
 | ID | Område | Allvar | Fil:rad | Vad och varför | Rekommendation | Kontroll |
 |---|---|---|---|---|---|---|
-| F3 | Säkerhet (DoS) | hög, fanns redan före PR:n | `src/auth.ts:9-10`, `src/routes/customers.ts:23`, `src/services/customerService.ts:79-86`, `src/app.ts` | `X-Customer-Id: 99999999999` passerar `requireCustomer` (heltal > 0, ingen int4-gräns) och skickas mot `customer_id INTEGER`. Postgres ger `out of range for type integer`. Handlern är `async` i Express 4, och det finns ingen felhanterare, så avvisningen blir en oavfångad promise-rejection. I Node 24 stoppar den som standard processen. Vem som helst som kan skicka en header kan då ta ned API:t med ett anrop. Alla DB-fel ger samma resultat. Den nya endpointen lägger till två frågor på den ytan. **Status: starkt skäl men ej körd.** | Error-middleware och wrappa async-handlers (eller Express 5), int4-gräns i `requireCustomer`, och ett test för `X-Customer-Id: 99999999999` (förväntat 401). | Jest-test (saknas), `no-floating-promises`/`no-misused-promises`. **Delvis automatisk**. Ändringen rör behörighet och felkontrakt och kräver godkännande. |
 | F4 | Säkerhet (DoS) | låg–medel | `db/schema.sql:24-30`, `src/services/customerService.ts:79-92` | Inget index på `orders.customer_id`, och varje anrop gör två frågor. Utan index blir båda sekventiella skanningar. Villkoret `($2::text IS NULL OR status = $2)` kan hindra ett framtida index. Ingen rate limit. Dokumenterat i ADR 0002 och medvetet utelämnat (schemaändring). | Index `orders(customer_id, created_at DESC, id DESC)` i en separat ändring. | **Manuell**, eventuellt `EXPLAIN`-test. |
 | F5 | Korrekthet | låg | `customerService.ts:79-93` | `items` och `total` hämtas i två frågor utan snapshot, så `total` kan avvika om en beställning skapas emellan. Dokumenterat i ADR 0002. | Acceptera (ADR) eller en `REPEATABLE READ`-transaktion. | **Manuell**. |
 | F7 (godtagen) | Testtäckning | låg | `tests/customers.test.ts` (401-testet) | Testet kontrollerar bara statuskoden, inte felkoden `unauthorized`, och ingen ogiltig header (`abc`, `0`, `-1`) testas mot routen. | Testa `error.code` och ogiltiga headers. | Jest-test. **Automatisk**. |
@@ -67,7 +100,7 @@ Verifiering efter åtgärderna: se avsnittet "Verifiering efter åtgärderna" l�
 
 ## Kunde inte bedömas utan att köra kod
 - Att alla tester går igenom (39 vid granskningen, enligt loggen och Verify, men inte omkört här). Efter rättningen av F1 är det 40, och det är verifierat (se "Verifiering efter åtgärderna").
-- Att F3 verkligen stoppar processen (se kontrollen ovan).
+- ~~Att F3 verkligen stoppar processen.~~ Provkört senare och bekräftat (se "F3: bevis"). Det som fortfarande inte är provkört är att äldre kod (före R09) har samma fel.
 - Frågeplan och prestanda utan index.
 - Hur `pg` serialiserar OFFSET nära 9e17.
 - Lint-, typecheck- och formatresultat.
@@ -76,7 +109,7 @@ Verifiering efter åtgärderna: se avsnittet "Verifiering efter åtgärderna" l�
 
 | Område | Fynd | Bedömning |
 |---|---|---|
-| **Säkerhet** | F3 (risk, hög, fanns före PR:n), F4 (risk) | Minst ett fynd finns, men F3 är **inte provkörd**. Ingen SQL-injektion och ingen ny IDOR. |
+| **Säkerhet** | **F3 (bekräftat med körning, hög, fanns före R09)**, F4 (risk) | Uppfyllt: F3 har fil:rad, bevisad körning och rekommendation. F3 är en befintlig sårbarhet i kodbasen, inte något R09 införde. Ingen SQL-injektion och ingen ny IDOR. |
 | **Struktur** | F8, F9, F10 (bekräftade, låga) | Uppfyllt. |
 | **Kodstandard** | F1 (S2 oskyddat av test), F9 (S7/S8, utanför diffen), F6/F7 (S16-luckor) | **Delvis.** Inget bekräftat brott mot en standardregel i den nya koden. Fynden är luckor i täckning och en regel som kringgås i `auth.ts`. Inget hittat på för att fylla kvoten. |
 
@@ -103,7 +136,7 @@ Verify (`verifierare`, 17 november 2026):
 | R07-filerna | inte ändrade |
 | Hänvisade filer | alla finns (radhänvisningarna är inte kontrollerade av verifieraren) |
 
-Inte verifierat: F3 är fortfarande inte provkörd, och mutationsdemonstrationen är körd av `utvecklare` (granskaren och verifieraren körde den inte om).
+Inte verifierat av Verify: mutationsdemonstrationen är körd av `utvecklare` (granskaren och verifieraren körde den inte om). F3 provkördes separat av huvudsessionen (se "F3: bevis") och ingår inte i Verify-kommandona.
 
 ## Rekommenderade åtgärder
 1. F1, F6, F7: lägg till tester. F2: rätta commit-antalen. Små och säkra ändringar. **Läge: F1 och F2 är gjorda. F6 och F7 är godtagna som låga fynd och väntar.**
@@ -111,4 +144,4 @@ Inte verifierat: F3 är fortfarande inte provkörd, och mutationsdemonstrationen
 3. F4 (index) och F9 (`unauthorized`) separat, eftersom de kräver godkännande (schema respektive felkontrakt).
 
 ## Övrigt vid granskningen
-- Under R09 gav `main-guard` flera falska larm för harmlösa kommandon (se Session 14). Provet av F3 blockerades däremot med rätta, eftersom kommandot nämnde `.env`. Det är underlag för riggen och hör inte till PR:n.
+- Under R09 gav `main-guard` flera falska larm för harmlösa kommandon (se Session 14). Det första provet av F3 blockerades däremot med rätta, eftersom kommandot nämnde `.env`. Provet gjordes sedan utan den flaggan. Det är underlag för riggen och hör inte till PR:n.
