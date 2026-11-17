@@ -56,6 +56,22 @@ describe("GET /customers/me/orders", () => {
     expect(res.body.items.map((o: { id: number }) => o.id)).toEqual([1047, 1041]);
   });
 
+  it("varje element har exakt nycklarna id, status och createdAt med rätt typer", async () => {
+    const res = await request(app).get("/customers/me/orders").set("X-Customer-Id", "2");
+
+    expect(res.status).toBe(200);
+    expect(res.body.items).toHaveLength(2);
+    for (const item of res.body.items) {
+      expect(Object.keys(item).sort()).toEqual(["createdAt", "id", "status"]);
+      expect(item).toEqual({
+        id: expect.any(Number),
+        status: expect.any(String),
+        createdAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/),
+      });
+      expect(Number.isNaN(Date.parse(item.createdAt))).toBe(false);
+    }
+  });
+
   it("returnerar första sidan med 20 beställningar när query saknas", async () => {
     // Kund 7 saknar beställningar i testdatan. Högre id får senare created_at.
     await db.query(
