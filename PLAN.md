@@ -26,7 +26,7 @@ Riggen ska innehålla:
 
 När riggen är på plats ska jag använda den för följande uppgifter från kursprojektet:
 
-- [ ] **Ny funktion:** Välja en user story och arbeta från krav och planering till implementation, testning och granskning.
+- [x] **Ny funktion (R09):** user story 3, sidindelning och statusfilter för `GET /customers/me/orders`, är byggd, granskad och verifierad på grenen `feature/r09-orders-pagination` (Session 14). Inte sammanslagen med `main` ännu.
 - [ ] **Kodgranskning:** Använda riggen för att granska en tilldelad pull request och identifiera problem med säkerhet, struktur och kodstandard.
 - [ ] **Modernisering:** Undersöka den äldre Python-modulen, skapa karakteriseringstester och genomföra mindre refaktoreringar med tester som säkerhetsnät.
 
@@ -128,3 +128,11 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
    - **Steg 4:** `docs/adr/0001-testskydd-i-main-guard.md` finns.
    - **Läget nu:** 189 av 189 i riggsviten, 52 av 52 mutationer för `main-guard` och 37 av 37 för `test-guard`. Inte committat (Session 13).
    - Inte inkopplad i `main-guard`. Inte committad.
+4. R09, sidindelning och statusfilter för `GET /customers/me/orders`, enligt `docs/plans/05-sidindelning-orders.md` (godkänd 17 november 2026, svarsform A och offset-paginering, ADR `docs/adr/0002-sidindelning-orders.md`):
+   - **Build med TDD:** 24 röda tester av rätt skäl, därefter implementation, och regressionstester för `page=01` och upprepade parametrar.
+   - **Verify:** 39 av 39 i `tests/customers.test.ts` och 49 av 50 i hela sviten. Det enda felet är det kända `GET /orders/:id/price`. `lint`, `typecheck` och `format:check` är godkända.
+   - **Mutationer:** alla sex körda mutationer gav minst ett rött test.
+   - **Review:** 0 hög, 0 medel och 3 låga fynd i vardera av två omgångar. Fynden är rättade eller dokumenterade.
+   - **Brytande ändring:** svaret är nu ett objekt med `items`, och högst 20 beställningar returneras utan query (ADR 0002).
+   - **Git:** fem commits på `feature/r09-orders-pagination` (`798824e`, `d133ea3`, `317a321`, `3416c8a`, `9c0db1a`). Pull request mot `main` ska användas som underlag för R10 och är inte sammanslagen.
+   - **Kvar:** ingen testad gräns för mycket stort `page`, duplicerad testdata och att `COUNT`-frågan inte är mutationstestad separat (Session 14).

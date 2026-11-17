@@ -1,6 +1,6 @@
 # ADR 0002: Sidindelning och statusfilter för GET /customers/me/orders
 
-**Status:** Accepterad (17 november 2026), efter Review och Verify. Inte committad.
+**Status:** Accepterad (17 november 2026), efter Review och Verify. Committad på grenen `feature/r09-orders-pagination` (`798824e`).
 **Datum:** 2026-11-17
 **Krav:**
 
