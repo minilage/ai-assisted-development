@@ -134,5 +134,5 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
    - **Mutationer:** alla sex körda mutationer gav minst ett rött test.
    - **Review:** 0 hög, 0 medel och 3 låga fynd i vardera av två omgångar. Fynden är rättade eller dokumenterade.
    - **Brytande ändring:** svaret är nu ett objekt med `items`, och högst 20 beställningar returneras utan query (ADR 0002).
-   - **Git:** fem commits på `feature/r09-orders-pagination` (`798824e`, `d133ea3`, `317a321`, `3416c8a`, `9c0db1a`). Pull request mot `main` ska användas som underlag för R10 och är inte sammanslagen.
+   - **Git:** sex commits på `feature/r09-orders-pagination` (`798824e`, `d133ea3`, `317a321`, `3416c8a`, `9c0db1a`, `240af7c`). Senare commits: se `git log main..feature/r09-orders-pagination`. Pull request mot `main` ska användas som underlag för R10 och är inte sammanslagen.
    - **Kvar:** ingen testad gräns för mycket stort `page`, duplicerad testdata och att `COUNT`-frågan inte är mutationstestad separat (Session 14).
