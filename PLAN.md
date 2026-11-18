@@ -40,7 +40,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ## Aktuell status
 
-**Senast uppdaterad:** 18 november 2026 (efter R10 steg 2: testgren med planterade fel, blind granskning och körinstruktion för en okänd PR, Session 17)
+**Senast uppdaterad:** 18 november 2026 (efter PR #6 och R21-utkastet, Session 18)
 
 ### Klart
 
@@ -110,7 +110,13 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Nästa arbetsmoment
 
-**Överlämning 18 november 2026 (efter R10 steg 2, se `sessions/session-17-2026-11-18.md`):**
+**Överlämning 18 november 2026 (efter PR #6, se `sessions/session-18-2026-11-18.md`):**
+- **Läge:** `origin/main` = `7c7951a` (PR #1–#6 sammanslagna, `git rev-list --count origin/main..HEAD` ger 0 för arbetsgrenen `docs/krav-bevis-r16-r19`). Taggen `inlamning` finns inte. Session 18:s dokument (`sessions/session-18-2026-11-18.md`, `docs/examination/r21-erfarenheter.md`, R21- och R22-raderna i `docs/examination/krav-bevis.md` och den här överlämningen) ligger på grenen `docs/r21-erfarenheter` (från `origin/main`), pushad men **inte** sammanslagen. Commit-hash: se `git log docs/r21-erfarenheter`. Ocommittat och ska inte följa med utan besked: `metrics/arbetsmoment.csv` (äldre ändring).
+- **Gjort (Session 18):** sessionslogg för arbetet efter PR #5 (R16, R19, R20), och ett utkast till R21 (erfarenheter och lärdomar) med beläggen kontrollerade av `granskare` (godkänd med anmärkningar, rättade).
+- **Nästa steg:** användarens genomgång av R21 (prioriteringarna i avsnitt 5 är en bedömning), PR och sammanslagning av `docs/r21-erfarenheter` efter godkännande, uppdatering av `requirements.md` avsnitt 7 (föråldrat), examinationsmallen (R23), muntlig förberedelse (R24) och taggen (R22, sist).
+- Överlämningen nedan gäller läget efter R10 steg 2 och är **föråldrad** i fråga om grenar och PR (R10-grenen och PR #5–#6 är sammanslagna). Beslutslistan i den (F1/F14/F3, S7, F11–F13, `main-guard.js`, testgrenen) gäller fortfarande.
+
+**Tidigare överlämning 18 november 2026 (efter R10 steg 2, se `sessions/session-17-2026-11-18.md`):**
 - **Läge:** `main` (`cbadff1`) har R09, R11 och två docs-PR:er (#1–#4). Pågående arbete ligger på `feature/r10-granskningsrigg` (`939006e`, dokumenten från steg 2 är committade och pushade), **inte** sammanslagen och utan PR. Testgrenen `test/r10-planterade-fel` finns lokalt. *(Före commiten stod här `94fa24a` och att dokumenten var ocommittade.)*
 - **R10, Review och Verify (Session 17):** gjorda. `lint`, `typecheck` och `format:check` godkända, Jest 50 av 51 (bara det kända priset 404), riggsviten 193 av 193 och pytest 13 av 13. Provade PR-steg: `git fetch origin pull/1/head`, tre-punkters-diff mot PR-basen (9 filer, 892 tillägg) och att `granskare` läser `FETCH_HEAD` (alla fem kommandona tilläts).
 - **R10, nästa steg:** en fullständig granskning av en riktig, oförberedd PR från någon annan. Ingen sådan finns (bara PR #1–#4, alla sammanslagna), så den kräver att användaren öppnar en.
