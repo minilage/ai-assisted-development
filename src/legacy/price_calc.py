@@ -3,6 +3,7 @@
 # OBS rör inte avrundningen, ekonomi har stämt av mot den.
 
 import os, sys, json, datetime
+from dataclasses import dataclass
 from decimal import Decimal
 import psycopg
 
@@ -13,16 +14,34 @@ MOMS = 25
 LOGG = os.path.join(os.path.dirname(__file__), "price_calc.log")
 
 
+@dataclass(eq=False)
 class Pris:
-    def __init__(self, net, vat, total):
-        self.net = net
-        self.vat = vat
-        self.total = total
+    net: Decimal
+    vat: Decimal
+    total: Decimal
 
 
 def _kapa(x):
     # två decimaler
     return Decimal(int(x * 100)) / 100
+
+
+def _summera_rader(rader):
+    summa = Decimal(0)
+    for q, p in rader:
+        summa = summa + q * p
+    return summa
+
+
+def _tillampa_rabatt(summa, procent):
+    return summa - summa * procent / 100
+
+
+def _berakna_pris(summa):
+    net = _kapa(summa)
+    vat = _kapa(net * MOMS / 100)
+    total = net + vat
+    return net, vat, total
 
 
 def calc_price(order_id):
@@ -34,24 +53,19 @@ def calc_price(order_id):
     kod = rad[0]
 
     cur.execute("select quantity, unit_price from order_lines where order_id = %s" % order_id)
-    summa = Decimal(0)
-    for q, p in cur.fetchall():
-        summa = summa + q * p
+    summa = _summera_rader(cur.fetchall())
 
     if kod:
         cur.execute("select percent from discounts where code = '%s'" % kod)
         r = cur.fetchone()
         if r:
-            summa = summa - summa * r[0] / 100
+            summa = _tillampa_rabatt(summa, r[0])
 
-    net = _kapa(summa)
-    vat = _kapa(net * MOMS / 100)
-    total = net + vat
+    net, vat, total = _berakna_pris(summa)
 
     try:
-        f = open(LOGG, "a")
-        f.write("%s %s %s\n" % (datetime.datetime.now().isoformat(), order_id, total))
-        f.close()
+        with open(LOGG, "a") as f:
+            f.write("%s %s %s\n" % (datetime.datetime.now().isoformat(), order_id, total))
     except:
         pass
 
