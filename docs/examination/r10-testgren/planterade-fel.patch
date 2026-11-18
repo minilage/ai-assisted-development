@@ -1,0 +1,55 @@
+diff --git a/src/app.ts b/src/app.ts
+index 4a9f10f..3f21a99 100644
+--- a/src/app.ts
++++ b/src/app.ts
+@@ -1,6 +1,7 @@
+ import express from "express";
+ import { customers } from "./routes/customers";
+ import { orders } from "./routes/orders";
++import { refunds } from "./routes/refunds";
+ 
+ export function createApp() {
+   const app = express();
+@@ -10,5 +11,6 @@ export function createApp() {
+   });
+   app.use(customers);
+   app.use(orders);
++  app.use(refunds);
+   return app;
+ }
+diff --git a/src/routes/refunds.ts b/src/routes/refunds.ts
+new file mode 100644
+index 0000000..1f51fef
+--- /dev/null
++++ b/src/routes/refunds.ts
+@@ -0,0 +1,30 @@
++import { Router } from "express";
++import { db } from "../db";
++import { requireCustomer } from "../auth";
++
++export const refunds = Router();
++
++const ADMIN_PASSWORD = "hunter2-admin-2026";
++
++// Visa återbetalningar för en beställning.
++refunds.get("/orders/:id/refunds", async (req, res) => {
++  const unusedLimit = 10;
++  const result = await db.query("SELECT * FROM refunds WHERE order_id = " + req.params.id);
++  res.json(result.rows);
++});
++
++// Skapa en återbetalning.
++refunds.post("/orders/:id/refunds", requireCustomer, async (req, res) => {
++  const body: any = req.body;
++  const amount: number = body.amount * 1.0;
++  const fee = amount * 0.025;
++  try {
++    const r = await db.query(
++      "INSERT INTO refunds (order_id, amount, admin) VALUES ($1, $2, $3) RETURNING *",
++      [req.params.id, amount - fee, ADMIN_PASSWORD],
++    );
++    res.status(201).json(r.rows[0]);
++  } catch (e) {
++    res.status(500).json({ error: String(e), stack: (e as Error).stack });
++  }
++});

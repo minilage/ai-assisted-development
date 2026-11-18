@@ -25,7 +25,10 @@ const EXPECTED = {
     invocation: "both",
     required: ["argument-hint"],
     disallowed: ["Edit", "Write", "NotebookEdit"],
-    files: ["checklista.md"],
+    files: ["checklista.md", "kontroller.md"],
+    // R10: granskningen ska täcka de tre områdena och visa vilken kontroll som kunde fånga ett
+    // fynd och om den är automatisk eller manuell.
+    mentions: ["Säkerhet", "Struktur", "Kodstandard", "Kontroll/hook", "Automatiskt/Manuellt"],
   },
   // CLAUDE.md: undersök hur prisberäkningen används innan ändringar föreslås.
   karakterisera: {
@@ -278,6 +281,63 @@ test("granska-standard: checklistan täcker alla avsnitt i docs/standard.md", ()
   const rules = [...standard.matchAll(/^- (.+)$/gm)].length;
   const ids = new Set([...list.matchAll(/^### (S\d+)\b/gm)].map((m) => m[1]));
   assert.equal(ids.size, rules, `docs/standard.md har ${rules} regler men checklistan ${ids.size}`);
+});
+
+// Reglerna i checklistan (S1–S18 ur standarden och U1.. utöver den) delar upp i regelblock.
+function checklistBlocks(text) {
+  const blocks = [];
+  const re = /^### ([SU]\d+)\b[^\n]*\n([\s\S]*?)(?=^### |^## |(?![\s\S]))/gm;
+  for (const m of text.matchAll(re)) blocks.push({ id: m[1], body: m[2] });
+  return blocks;
+}
+
+// R10: varje regel ska säga vilken kontroll som kan fånga ett fynd och om den är automatisk.
+test("granska-standard: varje regel anger kontroll och automatiskt eller manuellt", () => {
+  const list = fs.readFileSync(path.join(SKILLS_DIR, "granska-standard", "checklista.md"), "utf8");
+  const blocks = checklistBlocks(list.replace(/\r\n/g, "\n"));
+  assert.ok(blocks.length >= 26, `bara ${blocks.length} regler hittades`);
+  for (const b of blocks) {
+    const line = /^- Kontroll: (.+)$/m.exec(b.body);
+    assert.ok(line, `${b.id}: raden "- Kontroll:" saknas`);
+    assert.match(line[1], /\b(Automatiskt|Manuellt)\b/, `${b.id}: ange Automatiskt eller Manuellt`);
+  }
+});
+
+// R10: reglerna utöver standarden täcker säkerhet och struktur, inte bara stil.
+test("granska-standard: checklistan har regler utöver standarden för säkerhet och struktur", () => {
+  const list = fs
+    .readFileSync(path.join(SKILLS_DIR, "granska-standard", "checklista.md"), "utf8")
+    .replace(/\r\n/g, "\n");
+  assert.match(list, /^## Utöver standarden/m, 'avsnittet "Utöver standarden" saknas');
+  const extra = checklistBlocks(list).filter((b) => b.id.startsWith("U"));
+  assert.ok(extra.length >= 8, `${extra.length} regler utöver standarden, minst 8 ska finnas`);
+  const areas = new Set(
+    extra.map((b) => /^- Område: (\S+)/m.exec(b.body)?.[1]).filter((a) => a !== undefined),
+  );
+  for (const a of ["Säkerhet", "Struktur", "Testtäckning"])
+    assert.ok(areas.has(a), `ingen regel utöver standarden har området ${a}`);
+  for (const b of extra) assert.match(b.body, /^- Allvar: /m, `${b.id}: Allvar saknas`);
+});
+
+// R10: kontrollistan ska bara hänvisa till kontroller som finns i projektet.
+test("granska-standard: kontroller.md hänvisar bara till kontroller som finns", () => {
+  const file = path.join(SKILLS_DIR, "granska-standard", "kontroller.md");
+  assert.ok(fs.existsSync(file), "kontroller.md saknas");
+  const text = fs.readFileSync(file, "utf8");
+  const scripts = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8")).scripts;
+  for (const need of ["lint", "typecheck", "format:check", "test", "test:legacy"]) {
+    assert.ok(text.includes(`npm run ${need}`) || need === "test", `kontroller.md saknar ${need}`);
+    assert.ok(need in scripts, `package.json saknar skriptet ${need}`);
+  }
+  for (const m of text.matchAll(/npm run ([\w:-]+)/g))
+    assert.ok(m[1] in scripts, `npm-skriptet finns inte: ${m[1]}`);
+  assert.match(text, /npm test/, "npm test saknas");
+  for (const h of ["check-code.js", "test-guard.js", "main-guard.js", "agent-guard.js"]) {
+    assert.ok(text.includes(h), `kontroller.md saknar hooken ${h}`);
+    assert.ok(fs.existsSync(path.join(REPO_ROOT, ".claude", "hooks", h)), `hooken ${h} finns inte`);
+  }
+  assert.match(text, /Automatiskt/, 'förklaringen av "Automatiskt" saknas');
+  assert.match(text, /Manuellt/, 'förklaringen av "Manuellt" saknas');
 });
 
 test("Inga okända skills utan plats i EXPECTED", () => {

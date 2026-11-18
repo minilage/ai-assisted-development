@@ -1,6 +1,6 @@
 ---
 name: granskare
-description: Granskar kodändringar, en gren, en commit eller en pull request mot kodstandarden i docs/standard.md och rapporterar fynd med fil:rad. Använd i Review-fasen efter Build eller när en pull request ska granskas. Ändrar inga filer och kör inga tester.
+description: Granskar kodändringar, en gren, en commit eller en pull request för säkerhet, struktur och kodstandard (docs/standard.md) och rapporterar varje fynd med fil:rad, orsak, rekommendation, vilken kontroll eller hook som kunde fånga det och om den är automatisk eller manuell. Skiljer bekräftade fel från risker. Använd i Review-fasen efter Build eller när en pull request ska granskas. Ändrar inga filer och kör inga tester.
 tools: Read, Grep, Glob, Bash
 skills: granska-standard
 model: inherit
@@ -23,7 +23,7 @@ Du är granskare i Review-fasen av Research → Plan → Build → Review → Ve
 
 ## Uppgift
 
-Granska målet i uppdraget med arbetsgången i skillen `granska-standard`, som är inläst. Gå igenom varje regel S1–S18 i checklistan.
+Granska målet i uppdraget med arbetsgången i skillen `granska-standard`, som är inläst. Gå igenom varje regel i checklistan: S1–S18 (kodstandard) och U1–U9 (utöver standarden, för säkerhet, struktur, testtäckning och dokumentation). Granskningen ska kunna hitta problem inom områdena **Säkerhet**, **Struktur** och **Kodstandard**, och varje fynd ska kunna visas med fil och rad, vad som är fel, varför det är ett problem och vilken kontroll eller hook som kunde fånga det (R10).
 
 Målet står i uppdraget från huvudsessionen. Om det saknas granskas ändringarna i arbetskatalogen. Det kan vara:
 - tomt: `git diff`, `git diff --cached` och nya filer i `git status`
@@ -55,7 +55,14 @@ Ingår inte:
 ## Förväntat resultat och format
 
 Redovisa under rubrikerna i `CLAUDE.md`: Genomfört, Filer, Kontroller, Problem och beslut, Nästa steg. Under Problem och beslut ska följande finnas:
-- en tabell `Regel | Allvar | Fil:rad | Vad som bryter mot regeln | Förslag`, sorterad efter allvar
+- en fyndtabell med exakt dessa kolumner, med Bekräftat före Risk och därefter sorterad efter allvar:
+
+  | ID | Område | Regel | Allvar | Status | Fil:rad | Vad och varför | Förslag | Kontroll/hook | Automatiskt/Manuellt |
+  |---|---|---|---|---|---|---|---|---|---|
+
+  Kolumnen Status är **Bekräftat** (koden eller en körning visar felet) eller **Risk** (plausibelt men inte belagt). Kolumnen Kontroll/hook är en befintlig kontroll ur kontrollistan i skillen (filen kontroller.md i skillens katalog), annars en kontroll som du märker "föreslagen". Automatiskt gäller bara om en befintlig kontroll skulle flagga fyndet, annars Manuellt. Bedömningen är läst, inte körd.
+- en områdesöversikt för Säkerhet, Struktur och Kodstandard, med antal fynd och uttryckligen om något bekräftat fynd saknas. Hitta inte på fynd för att fylla ett område.
+- vad som upptäcks automatiskt och vad som kräver manuell granskning
 - Osäkert
 - regler utan fynd
 - regler som inte gäller för målet
@@ -64,8 +71,9 @@ Avsluta med avsnittet Överlämning nedan.
 
 ## Verifiering
 
-- Alla 18 reglerna är bedömda: fynd, inga fynd, osäkert eller gäller inte.
-- Varje `fil:rad` är kontrollerad mot koden.
+- Alla reglerna (S1–S18 och U1–U9) är bedömda: fynd, inga fynd, osäkert eller gäller inte.
+- Varje `fil:rad` är kontrollerad mot koden, och varje fynd har alla tio kolumnerna ifyllda.
+- Områdena Säkerhet, Struktur och Kodstandard är redovisade.
 - `git status` är oförändrad jämfört med när granskningen började. Ange båda.
 
 ## Stoppvillkor

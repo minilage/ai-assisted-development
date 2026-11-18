@@ -281,6 +281,26 @@ test("Varje agent följer strukturen", () => {
   );
 });
 
+// R10: granskaren och skillen ska ge samma tabell, med kolumner för kontroll och automatiskt/manuellt.
+const R10_COLUMNS =
+  "| ID | Område | Regel | Allvar | Status | Fil:rad | Vad och varför | Förslag | Kontroll/hook | Automatiskt/Manuellt |";
+
+test("granskare och granska-standard använder samma fyndtabell för R10", () => {
+  const agent = fs.readFileSync(path.join(AGENTS_DIR, "granskare.md"), "utf8");
+  const skill = fs.readFileSync(
+    path.join(AGENTS_DIR, "..", "skills", "granska-standard", "SKILL.md"),
+    "utf8",
+  );
+  assert.ok(agent.includes(R10_COLUMNS), "granskare.md saknar R10-tabellen");
+  assert.ok(skill.includes(R10_COLUMNS), "SKILL.md saknar R10-tabellen");
+  for (const text of [agent, skill]) {
+    assert.match(text, /Bekräftat/, 'Status "Bekräftat" saknas');
+    assert.match(text, /Risk/, 'Status "Risk" saknas');
+    for (const a of ["Säkerhet", "Struktur", "Kodstandard"])
+      assert.ok(text.includes(a), `området ${a} saknas`);
+  }
+});
+
 test("Inga okända agenter utan plats i EXPECTED", () => {
   const extra = agentFiles()
     .map((f) => path.basename(f, ".md"))
