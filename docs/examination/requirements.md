@@ -4,7 +4,7 @@
 **Projekt:** AI-rigg för en befintlig kodbas  
 **Repository:** `minilage/ai-assisted-development`  
 **Examination:** 19 november 2026  
-**Mål:** Väl godkänt (VG)  
+**Fokus:** En fungerande AI-rigg som används i riktigt utvecklingsarbete (se avsnitt 1)  
 **Dokument:** Egen sammanställning av kursens examinationskrav
 
 ---
@@ -46,7 +46,7 @@ För godkänt ska det finnas en fungerande AI-rigg som har använts i riktigt ut
 
 ### Väl godkänt (VG)
 
-För väl godkänt krävs dessutom att jag kan:
+För de fördjupade kraven ska det dessutom gå att:
 - Jämföra olika lösningar och förklara deras styrkor och svagheter.
 - Motivera varför jag har valt en viss lösning.
 - Använda mätvärden för att stödja mina beslut, till exempel tokens, tid, kostnad eller antal upptäckta fel.
@@ -54,7 +54,7 @@ För väl godkänt krävs dessutom att jag kan:
 - Koppla krav, beslut, tester och commits till varandra.
 - Förklara hur riggen fungerar, varför den är uppbyggd som den är och vad den inte klarar av.
 
-### Vad som behöver framgå för VG
+### Vad som behöver framgå för större tekniska beslut
 
 För större tekniska beslut ska jag kunna svara på följande:
 1. Vilket problem behövde lösas?
