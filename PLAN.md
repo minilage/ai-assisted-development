@@ -27,7 +27,7 @@ Riggen ska innehålla:
 När riggen är på plats ska jag använda den för följande uppgifter från kursprojektet:
 
 - [x] **Ny funktion (R09):** user story 3, sidindelning och statusfilter för `GET /customers/me/orders`, är byggd, granskad och verifierad (Session 14). Sammanslagen i `main` via PR #1 (merge-commit `fb8888d`, 18 november 2026).
-- [ ] **Kodgranskning (R10):** riggen har granskat R09:s pull request med `granskare` och `granska-standard` (`docs/examination/r10-granskning-pr-r09.md`). Kvar: en tilldelad eller oförberedd PR, och ett bekräftat brott mot en standardregel i ny kod (se punkt 5 under "Nästa arbetsmoment").
+- [ ] **Kodgranskning (R10):** riggen har granskat R09:s pull request med `granskare` och `granska-standard` (`docs/examination/r10-granskning-pr-r09.md`). Testgren med planterade fel och blind granskning är gjorda (Session 17, `docs/examination/r10-testgren/`), och körinstruktionen för en okänd PR finns (`docs/examination/kor-granskning-okand-pr.md`, delvis provad). Kvar: en riktig, oförberedd PR från någon annan, Review och Verify (se punkt 5 under "Nästa arbetsmoment").
 - [x] **Modernisering (R11):** den äldre Python-modulen är analyserad, har 13 karakteriseringstester och tre refaktoreringssteg, och en migreringsplan finns. Minimal omfattning, se punkt 6 under "Nästa arbetsmoment". Sammanslagen i `main` via PR #2 (merge-commit `d25e11b`, 18 november 2026).
 
 ## Arbetssätt
@@ -40,7 +40,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ## Aktuell status
 
-**Senast uppdaterad:** 18 november 2026 (efter sammanslagningen av R09 och R11, R10 steg 1 och granskningen av R11)
+**Senast uppdaterad:** 18 november 2026 (efter R10 steg 2: testgren med planterade fel, blind granskning och körinstruktion för en okänd PR, Session 17)
 
 ### Klart
 
@@ -110,10 +110,10 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Nästa arbetsmoment
 
-**Överlämning 18 november 2026 (inför `/clear`, se `sessions/session-16-2026-11-18.md`):**
-- **Läge:** `main` (`cbadff1`) har R09, R11 och två docs-PR:er (#1–#4). Pågående arbete ligger på `feature/r10-granskningsrigg` (`e6de311` riggen, `aa93fd4` R11-granskningen), pushad men **inte** sammanslagen och utan PR.
-- **R10, nästa steg (godkänd plan):** steg 2–3: en testgren med planterade fel (slås aldrig ihop), blind granskning med `granskare` och minst ett **bekräftat automatiskt fynd** (befintlig kontroll, till exempel lint eller `test-guard`). Därefter körinstruktion för en okänd PR (`git fetch origin pull/<n>/head`, ej provat), dokumentation, Review och Verify.
-- **Beslut som väntar:** (a) F1 och F14 (SQL-injektion via rabattkoden, hög, provad med körning) och F3 (en header stoppar API:t): egna moment som kräver godkännande. (b) Ska S7 gälla `auth.ts`? (c) Rätta F11–F13 i R11:s dokument? (d) PR för `feature/r10-granskningsrigg`.
+**Överlämning 18 november 2026 (efter R10 steg 2, se `sessions/session-17-2026-11-18.md`):**
+- **Läge:** `main` (`cbadff1`) har R09, R11 och två docs-PR:er (#1–#4). Pågående arbete ligger på `feature/r10-granskningsrigg` (`94fa24a`), pushad men **inte** sammanslagen och utan PR. Ocommittat: `docs/examination/r10-testgren/` (4 filer), `docs/examination/kor-granskning-okand-pr.md`, Session 17 och den här filen. Testgrenen `test/r10-planterade-fel` finns lokalt.
+- **R10, nästa steg:** Review och Verify av dokumenten, och en provgranskning av en hämtad PR (tre-punkters-diff, att `granskare` läser `FETCH_HEAD`) enligt `docs/examination/kor-granskning-okand-pr.md`. En riktig, oförberedd PR är det som saknas.
+- **Beslut som väntar:** (a) F1 och F14 (SQL-injektion via rabattkoden, hög, provad med körning) och F3 (en header stoppar API:t): egna moment som kräver godkännande. (b) Ska S7 gälla `auth.ts`? (c) Rätta F11–F13 i R11:s dokument? (d) PR för `feature/r10-granskningsrigg`. (e) Ska `main-guard.js` sluta ge falska larm på ett fristående `*` (säkerhetsinställning, kräver godkännande)? (f) Ska testgrenen `test/r10-planterade-fel` tas bort?
 - **Kända fel kvar:** Jest `GET /orders/:id/price` (404, `python3` är Windows Store-genvägen), P1–P8, F3. Python-testerna körs med `.venv/Scripts/python.exe -m pytest tests/legacy`. Kör aldrig Jest och pytest samtidigt (delad `butik_test`).
 - **Arbetssätt:** commit och push bara efter godkännande, med `git add <filer>`, och meddelanden via `git commit -F` från en fil.
 
@@ -156,7 +156,10 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
    - **Bekräftat:** F3 (hög, säkerhet) provkördes i en isolerad process 18 november 2026. Det är en befintlig sårbarhet och är **inte rättad**.
    - **R10, steg 1 (plan godkänd 18 november 2026), `feature/r10-granskningsrigg`, commit `e6de311`:** `granska-standard` och `granskare` ger samma fyndtabell med kolumnerna Område, Status (Bekräftat eller Risk), Kontroll/hook och Automatiskt/Manuellt. Checklistan har U1–U9 utöver standarden och en `Kontroll:`-rad per regel, och en ny `kontroller.md` listar de kontroller som finns. Byggt med TDD (5 röda tester först), riggsviten 193 av 193 (189 före), mutationsprov 10 av 10 röda.
    - **R10, granskning av R11:s PR (`docs/examination/r10-granskning-pr-r11.md`, commit `aa93fd4`):** 23 fynd. **S3** (F1, F14, F3, F7) och **S12** (F2) är bekräftade. F1 (SQL-injektion via rabattkoden) och F14 (staplade satser) är provade mot testdatabasen med oskadliga satser. Bara F20 bedömdes som Automatiskt. Ingenting är rättat.
-   - **Kvar för R10:** steg 2–3 (planterade fel och ett riktigt automatiskt fynd), körinstruktion för en okänd PR, och att riggen används på något oförberett vid seminariet. Kodstandard har nu bekräftade brott (S3, S12), men de ligger i kod som R11 inte skrev. Om S7 ska gälla `auth.ts` är ett öppet beslut.
+   - **R10, steg 2 och blind granskning (Session 17, `docs/examination/r10-testgren/`):** testgrenen `test/r10-planterade-fel` (lokal, ej pushad, slås aldrig ihop) fick sju tillämpliga planterade fel i `src/routes/refunds.ts`. `granskare` hittade alla sju utan ledtrådar, plus fem äkta fynd (17 fynd, Underkänd). Bara lint-felen (oanvänd variabel, explicit `any`) fångades av en befintlig kontroll: `check-code.js` och `npm run lint` (**bekräftat automatiskt fynd, körd**). De övriga fem (S3, behörighet, pengar, hemlighet, läckande fel) är Manuella. `.skip` blockerades av `test-guard` och skapades inte. Experimentet är bevarat som patch (`planterade-fel.patch`, provad på en ren kopia) och koden är återställd. Granskarens egen sammanräkning stämde inte med tabellen (se `granskning-blind.md`).
+   - **Körinstruktion för en okänd PR:** `docs/examination/kor-granskning-okand-pr.md`. `git fetch origin pull/4/head` är provad (`FETCH_HEAD` blev `57c1adb`). Tre-punkters-diffen och att `granskare` läser `FETCH_HEAD` är inte provade.
+   - **Rigg-fynd (hooks):** `main-guard.js` blockerade tre ofarliga anrop eftersom ett fristående `*` tolkas som en hemlig fil (`mentionsSecret("*")` är `true`). Ingen spärr kringgicks. Ingen rättning är godkänd.
+   - **Kvar för R10:** en riktig, oförberedd PR från någon annan, Review och Verify av dokumenten. Kodstandard har nu bekräftade brott (S3, S12), men de ligger i kod som R11 inte skrev. Om S7 ska gälla `auth.ts` är ett öppet beslut.
 6. R11, modernisering av `src/legacy/price_calc.py` (Session 15, minimal omfattning):
    - **Codemap och analys:** `docs/legacy/price_calc.md` (moduler, beroenden, problem P1–P10).
    - **Karakteriseringstester:** `tests/legacy/test_price_calc.py` och `tests/legacy/conftest.py`: 13 tester, varav 6 låser kända fel. 13 av 13 godkända mot den oförändrade koden. Mutationsprov på kopior: 9, 6 och 2 röda av 13.
