@@ -34,6 +34,7 @@ Bara de två lint-felen fångades av en befintlig kontroll. De övriga sex fylls
 ## Observationer om riggen
 
 - **`main-guard.js` är för bred.** Ett fristående `*` i ett Bash-kommando (`SELECT * FROM` i en heredoc) blockerades som "filer med hemligheter". `mentionsSecret("*")` ger `true`, men `mentionsSecret("*.ts")` ger `false`. En Grep med glob `!{node_modules,.git}/**` blockerades av samma spärr, troligen av samma orsak (inte undersökt). Ingen av blockeringarna kringgicks.
+- **Förtydligande efter Review (Session 17):** regeln är mer exakt än "ett fristående `*`". Ett ord blockeras när dess sista del bara är ett glob-mönster: `*`, `**`, `test/*` och `!{node_modules,.git}/**` matchar `mentionsSecret`, medan `*.test.js`, `.claude/**/*.test.js` och `refs/pull/*/head` inte gör det. Texten ovan står kvar som den skrevs. Orsaken till att `verifierares` `find`-anrop blockerades är inte klarlagd, eftersom `*.test.js` inte matchar.
 - **`test-guard` fungerar** i riggens session mot `.skip`, men gäller inte för en PR från någon annan.
 - **`check-code.js` är en hook, inte CI.** Den flaggade lint-felen vid skrivningen, men det finns ingen `.github/`, så ingen kontroll körs på en färdig PR.
 - Granskarens sammanfattning stämde inte med dess egen tabell (se slutet av `granskning-blind.md`).
