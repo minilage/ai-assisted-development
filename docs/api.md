@@ -14,7 +14,7 @@ Alla anrop utom `POST /customers` och `/health` kräver headern `X-Customer-Id` 
 
 ## Den äldre modulen
 
-`src/legacy/price_calc.py` räknar pris, rabatt och moms för en beställning. Den är skriven i Python, saknar tester och dokumentation och anropas från två ställen: API:t (via `src/pricing/legacyPrice.ts`) och den nattliga rapporten `jobs/nightly_report.py`.
+`src/legacy/price_calc.py` räknar pris, rabatt och moms för en beställning. Den är skriven i Python. Den hade från början varken tester eller dokumentation, men har sedan R11 karakteriseringstester (`tests/legacy/`) och en codemap (`docs/legacy/price_calc.md`). Den anropas från två ställen: API:t (via `src/pricing/legacyPrice.ts`) och den nattliga rapporten `jobs/nightly_report.py`.
 
 Den går att köra direkt:
 

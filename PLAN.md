@@ -19,7 +19,7 @@ Riggen ska innehålla:
 - [x] Minst fem hooks, inklusive hantering av sessionsminne.
 - [x] Behörigheter med allow, ask och deny.
 - [x] Automatiska kontroller för kodstandard, formatering och typkontroll.
-- [ ] Sessionsloggar och versionshantering i Git.
+- [x] Sessionsloggar och versionshantering i Git. Sessionsloggar 01–15 finns i `sessions/`. Arbetet ligger i Git med separata commits och tre sammanslagna pull requests (PR #1–#3, se "Nästa arbetsmoment" och "Aktuell status").
 - [x] Skydd av tester (R07): `test-guard.js` i `main-guard.js`, ask för testkonfigurationen och ADR 0001. Verifierat i Session 13. Committat och pushat i `e3dbda2`.
 
 ## Arbeten som riggen ska användas till
@@ -135,7 +135,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
    - **Läget nu:** 189 av 189 i riggsviten, 52 av 52 mutationer för `main-guard` och 37 av 37 för `test-guard`. Committat och pushat i `e3dbda2` (Session 13). M1, M2 och övriga kända begränsningar är dokumenterade, och användaren har godkänt att R07 avslutas med dem.
 4. R09, sidindelning och statusfilter för `GET /customers/me/orders`, enligt `docs/plans/05-sidindelning-orders.md` (godkänd 17 november 2026, svarsform A och offset-paginering, ADR `docs/adr/0002-sidindelning-orders.md`):
    - **Build med TDD:** 24 röda tester av rätt skäl, därefter implementation, och regressionstester för `page=01` och upprepade parametrar.
-   - **Verify:** 39 av 39 i `tests/customers.test.ts` och 49 av 50 i hela sviten. Det enda felet är det kända `GET /orders/:id/price`. `lint`, `typecheck` och `format:check` är godkända.
+   - **Verify:** 39 av 39 i `tests/customers.test.ts` och 49 av 50 i hela sviten vid den första Verify. Efter R10:s rättning av F1 är det 40 av 40 och 50 av 51 (se punkt 7). Det enda felet är det kända `GET /orders/:id/price`. `lint`, `typecheck` och `format:check` är godkända.
    - **Mutationer:** alla sex körda mutationer gav minst ett rött test.
    - **Review:** 0 hög, 0 medel och 3 låga fynd i vardera av två omgångar. Fynden är rättade eller dokumenterade.
    - **Brytande ändring:** svaret är nu ett objekt med `items`, och högst 20 beställningar returneras utan query (ADR 0002).

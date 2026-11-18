@@ -5,7 +5,7 @@
 Projektet innehåller två delar med olika ålder och kvalitet:
 
 - **REST-API:t** för kunder och beställningar, i TypeScript med Express och PostgreSQL. Det har tester och följer kodstandarden i `docs/standard.md` någorlunda.
-- **Den äldre prisberäkningen** i `src/legacy/price_calc.py`, i Python. Den är odokumenterad, saknar tester och har okända antaganden. Den är den del som moderniseras i kursprojektet.
+- **Den äldre prisberäkningen** i `src/legacy/price_calc.py`, i Python. Den hade från början ingen dokumentation och inga tester. Efter R11 finns en codemap (`docs/legacy/price_calc.md`) och 13 karakteriseringstester (`tests/legacy/`), men den har fortfarande kända fel och risker (till exempel SQL-injektion och kapning i stället för avrundning). Den är den del som moderniseras i kursprojektet.
 
 ## Kom igång
 
@@ -35,11 +35,45 @@ curl http://localhost:3000/orders/1042/price -H "X-Customer-Id: 1"
 | Kommando | Vad det gör |
 |---|---|
 | `npm test` | Kör API-testerna mot testdatabasen. |
-| `npm run test:legacy` | Kör Python-testerna (finns inga än). |
+| `npm run test:legacy` | Kör Python-testerna i `tests/legacy/` (13 tester) med `pytest -q`. Kräver att `pytest` finns på `PATH`, se "Python-testerna" nedan. |
 | `npm run lint` | ESLint med grundkonfiguration. |
 | `npm run typecheck` | TypeScript utan att bygga. |
 | `npm run format` | Formaterar koden med Prettier. |
 | `npm run db:reset` | Återställer båda databaserna till schema och testdata. |
+
+### Python-testerna
+
+Python-testerna i `tests/legacy/` kräver `pytest` och `psycopg` från `requirements.txt`. Installera dem helst i en virtuell miljö och kör testerna med den Python som har paketen:
+
+```bash
+python -m venv .venv                  # en gång (python3 på vissa system)
+# aktivera miljön, se nedan
+pip install -r requirements.txt       # en gång
+python -m pytest tests/legacy         # 13 tester
+```
+
+Aktivera miljön:
+
+| System | Kommando |
+|---|---|
+| Windows (PowerShell) | `.venv\Scripts\Activate.ps1` |
+| Windows (Git Bash) | `source .venv/Scripts/activate` |
+| macOS och Linux | `source .venv/bin/activate` |
+
+Aktiveringskommandona är standard för `venv`. De är inte provade här, men skripten `Activate.ps1` och `activate` finns i `.venv/Scripts/`.
+
+Du kan också hoppa över aktiveringen och anropa miljöns Python direkt. **Exempel, verifierat i det här projektet** (Windows, Python 3.14, `psycopg` 3.2.10, `pytest` 8.3.3):
+
+```bash
+.venv/Scripts/python.exe -m pytest tests/legacy
+```
+
+På macOS och Linux motsvarar det `.venv/bin/python -m pytest tests/legacy` (inte provat här).
+
+Att tänka på:
+- `npm run test:legacy` kör `pytest -q` och fungerar bara om `pytest` ligger på `PATH`, till exempel med aktiverad miljö. Det är inte provat här. Använd annars kommandot ovan.
+- Testerna använder testdatabasen (`TEST_DATABASE_URL`, standard `butik_test`), återställer den och avbryter om databasnamnet inte slutar på `_test`. Databasen måste vara igång (`npm run db:up`).
+- Python-testerna och `npm test` delar testdatabasen och får inte köras samtidigt.
 
 ## Struktur
 
