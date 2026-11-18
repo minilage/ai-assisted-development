@@ -8,7 +8,7 @@
 - User story 3 (`docs/user-stories.md:7`)
 
 **Plan:** `docs/plans/05-sidindelning-orders.md` (godkänd 2026-11-17, med svarsform A och offset-paginering)
-**Gren:** `feature/r09-orders-pagination`
+**Gren:** `feature/r09-orders-pagination` (sammanslagen i `main` som PR #1, `fb8888d`, 18 november 2026)
 
 ## 1. Vilket problem behövde lösas?
 

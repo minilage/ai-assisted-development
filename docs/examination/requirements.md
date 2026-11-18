@@ -451,10 +451,10 @@ Den här delen bygger på de resultat Claude Code hittills har rapporterat. Stat
 | R05 | Genomfört | Sessionsminne och tester av kontexthantering |
 | R06 | Genomfört | Behörighetsregler, agent-guard och main-guard |
 | R07 | Uppfyllt (17 november 2026) | `test-guard.js` i `main-guard.js` och ask för `jest.config.js` och `pytest.ini`. ADR: `docs/adr/0001-testskydd-i-main-guard.md`. Bevis: Session 13 (riktiga körningar, 189 av 189 tester, mutationer 52 av 52 och 37 av 37). Commit `e3dbda2`. Kända begränsningar (M1, M2 med flera) är dokumenterade. |
-| R08 | Genomförs löpande | PLAN.md och sessionsloggar 01–12 |
-| R09 | Delvis | Fullständigt arbetsflöde för GET /health, men ingen av de valda user stories färdig |
-| R10 | Förberett | Granskningsskill och agent finns; tilldelad PR återstår |
-| R11 | Delvis | Analys och skill finns; praktisk modernisering återstår |
+| R08 | Genomförs löpande | PLAN.md och sessionsloggar 01–15 |
+| R09 | Uppfyllt (18 november 2026) | User story 3 (sidindelning och statusfilter för `GET /customers/me/orders`): 15 acceptanskriterier i Givet/När/Så (`docs/plans/05-sidindelning-orders.md`), API-kontrakt (`docs/api.md`), TDD, Review och Verify, ADR 0002 (`docs/adr/0002-sidindelning-orders.md`) och spårbara commits. Sammanslagen som PR #1 (`fb8888d`). Bevis: Session 14. 40 av 40 i `tests/customers.test.ts`. Ett känt fel (`GET /orders/:id/price`) hör inte till R09. |
+| R10 | Delvis (18 november 2026) | Riggen har granskat R09:s pull request (`docs/examination/r10-granskning-pr-r09.md`, Session 14): 12 fynd med fil, rad, orsak, rekommendation, vilken kontroll som kunde fånga dem och om de upptäcks automatiskt eller manuellt. Säkerhet: F3 är bekräftat med körning (hög, befintlig sårbarhet, ej rättad). Struktur: F8–F10. Kodstandard: bara testluckor och S7/S8 i `auth.ts`, inget bekräftat brott i ny kod. Kvar: en tilldelad eller oförberedd PR. |
+| R11 | Uppfyllt i minimal omfattning (18 november 2026) | Codemap (`docs/legacy/price_calc.md`), 13 karakteriseringstester inklusive kända fel (`tests/legacy/`), mutationsprov (9, 6 och 2 röda av 13), tre refaktoreringssteg som egna commits och en migreringsplan med expand/contract (`docs/migrations/001-rabattkod-fk-och-index.md`, ej körd). Sammanslagen som PR #2 (`d25e11b`). Bevis: Session 15. Kända fel och risker (P1–P8) är dokumenterade men inte rättade. |
 | R12–R21 | Delvis / återstår | Underlag finns men dokumentationsmallen är inte färdig |
 | R22 | Delvis | Repository pushat; slutlig tagg saknas |
 | R23 | Återstår | PDF ska färdigställas |

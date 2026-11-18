@@ -1,6 +1,6 @@
 # Plan: Test för GET /health
 
-**Status:** Godkänd och genomförd 2026-11-16. Build (`utvecklare`), Review (`granskare`, godkänd utan fynd) och Verify (`verifierare`, alla kontroller godkända) är klara. Se `sessions/session-12-2026-11-16.md`. Inte committad.
+**Status:** Godkänd och genomförd 2026-11-16. Build (`utvecklare`), Review (`granskare`, godkänd utan fynd) och Verify (`verifierare`, alla kontroller godkända) är klara. Se `sessions/session-12-2026-11-16.md`. Committad och pushad i `b2647f9`.
 **Datum:** 2026-11-15, uppdaterad 2026-11-16
 **Roll i projektet:** första riktiga testet av riggen (beslut 2026-11-16). `utvecklare` gör Build med `tdd`, `granskare` gör Review och `verifierare` gör Verify. Det är också första gången skillen `tdd` används i en riktig uppgift.
 **Underlag:** Granskningsfynd i `sessions/session-07-2026-11-15.md:244`: S16, Låg, `src/app.ts:8`, "`GET /health` saknar test". Uppdraget kommer från Session 08 (`sessions/session-08-2026-11-15.md:332`).

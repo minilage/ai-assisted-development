@@ -1,6 +1,6 @@
 # Plan: Sidindelning och statusfilter för GET /customers/me/orders (R09)
 
-**Status:** Godkänd och genomförd 2026-11-17 (alla nio rekommendationer, svarsform A, offset). Beslut efter Review: `page=01` godtas som sida 1, upprepad parameter ger 400. Se `sessions/session-14-2026-11-17.md`. Committad på grenen `feature/r09-orders-pagination` (`798824e`, `d133ea3`, `317a321`, `3416c8a`, `9c0db1a`, `240af7c`). Senare commits: se `git log main..feature/r09-orders-pagination`.
+**Status:** Godkänd och genomförd 2026-11-17 (alla nio rekommendationer, svarsform A, offset). Beslut efter Review: `page=01` godtas som sida 1, upprepad parameter ger 400. Se `sessions/session-14-2026-11-17.md`. Committad på grenen `feature/r09-orders-pagination` (`798824e`, `d133ea3`, `317a321`, `3416c8a`, `9c0db1a`, `240af7c`). Senare commits: se `git log fb8888d^1..fb8888d^2`. Sammanslagen i `main` som PR #1 (merge-commit `fb8888d`, 18 november 2026).
 **Datum:** 2026-11-17
 **Gren:** `feature/r09-orders-pagination` (redan skapad)
 **Underlag:** User story 3 i `docs/user-stories.md:7`: "Som kund vill jag se mina beställningar sidvis och kunna filtrera på status." Krav R09 (`docs/examination/requirements.md:194`). Grenen används också för R10 (`docs/examination/requirements.md:224`).
