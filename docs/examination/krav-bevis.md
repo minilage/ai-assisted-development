@@ -158,11 +158,26 @@ Varför parallellt: Review och Verify är oberoende av varandra och läser bara.
 | `9cd08258` | 16 nov | Frågor 7–9 med konsekvenser | 499,2 | 37,7 | 206 084 | 21 % | 16,64 | Opus 5.5 |
 | `f03e7ab5` | 16 nov | Kravuppfyllnad R01–R24 inför examination | 360,8 | 65,2 | 355 997 | 34 % | 25,22 | Opus 5.5 |
 | `344b232c` | 17–18 nov | R09 orders pagination and status filtering | 898,5 | 63,0 | 477 991 | 36 % | 20,30 | Sonnet 5.5 |
-| `0d2737f1` (**pågående, ögonblicksbild**) | 18 nov | (ingen rad än) | cirka 119 | cirka 15,5 | 113 551 | 9 % | cirka 3,60 | Sonnet 5.5 |
+| `0d2737f1` (**pågående, ögonblicksbild 18 nov 14:33 UTC**) | 18 nov | (ingen rad än) | 141,0 | 19,5 | 148 331 | 7 % | 4,46 | Sonnet 5.5 |
 
 Två ytterligare CSV-rader (`108ab81a`, `997f4ec5`, 15 november) saknar etikett och kostnad och har ett anrop vardera. De är inte med i tabellen.
 
-**Summa för de 12 raderna i CSV:n:** vägg 2 432,3 min, API 272,6 min, 1 330 API-anrop, 2 954 input-tokens, 1 620 522 output-tokens, 221 096 847 cache-läsningar, 4 454 931 cache-skrivningar och 99,38 USD (uppskattning). Opus 5.5: 11 rader, 79,08 USD och 1 142 531 output-tokens. Sonnet 5.5: 1 rad, 20,30 USD och 477 991 output-tokens. Raderna är inte jämförbara som modelljämförelse, eftersom arbetet skiljer sig mellan sessionerna.
+**Summa för de 12 raderna i CSV:n:** vägg 2 432,3 min, API 272,6 min, 1 330 API-anrop, 2 954 input-tokens, 1 620 522 output-tokens, 221 096 847 cache-läsningar och 4 454 931 cache-skrivningar. **Kostnad: 99,38 USD (uppskattning), summerad över de 10 rader som har en kostnad.** Opus 5.5: 11 rader, varav 9 har kostnad (79,08 USD), och 1 142 531 output-tokens. Sonnet 5.5: 1 rad, 20,30 USD och 477 991 output-tokens. Raderna är inte jämförbara som modelljämförelse, eftersom arbetet skiljer sig mellan sessionerna. *(En tidigare version av den här raden sa "12 raderna … 99,38 USD" och "Opus 5.5: 11 rader, 79,08 USD". Två av raderna saknar kostnad, så summan gäller 10 rader.)*
+
+### Avstämning av kostnadssiffrorna (18 november 2026)
+
+| Siffra | Var | Avstämd mot | Resultat |
+|---|---|---|---|
+| 99,38 USD (summa) | Den här filen och R20 | Exakt summa av radernas `kostnad_usd_uppskattad` (4 decimaler): 99,3848. Summan av de avrundade raderna i tabellen: 99,37 | **Stämmer.** Skillnaden på 0,01 USD är avrundning. Opus: exakt 79,0849, avrundat 79,07 |
+| 3,86 / 1,53 / 0,90 USD (`81117d99`, `38312034`, `51e9ca5b`) | `sessions/session-06-2026-11-15.md` rad 184–186 | CSV-raderna | **Stämmer** |
+| 18,95 USD för `344b232c` | `sessions/session-16-2026-11-18.md` rad 47 (ögonblicksbild 18 nov 12:00:30 UTC, markerad preliminär) | CSV-raden: 20,2999 USD, och live-filen vid 12:11:13 UTC: 20,2999 | **Ingen motsägelse.** Loggen visar en tidigare ögonblicksbild. Slutvärdet 20,30 USD är CSV-raden. Skillnaden är 1,35 USD som uppstod under de sista cirka 11 minuterna |
+| Tid för `344b232c`: 888 min vägg, 60 min API (Session 16) | Samma log | CSV: 898,5 och 63,0 min | **Ingen motsägelse**, samma förklaring (tidigare ögonblicksbild) |
+| CSV-tider (`22:12`–`13:11`) | `metrics/arbetsmoment.csv` | Live-filen: `21:12:48`–`12:11:13` UTC | **Stämmer.** CSV:n är i lokal tid (UTC+1) |
+| Pågående session `0d2737f1`: 4,46 USD, 141,0 min vägg, 19,5 min API, 148 331 output-tokens | Live-fil och transkript, 18 nov 14:33 UTC | Ingen CSV-rad än | Ögonblicksbild som växer. En tidigare avläsning (14:11 UTC) gav 3,60 USD och 113 551 tokens. Slutvärdet blir en CSV-rad när `SessionEnd` har körts |
+
+Med den pågående sessionen som ögonblicksbild blir den samlade uppskattade kostnaden cirka 103,84 USD (99,38 + 4,46). Det är **inte** ett slutvärde.
+
+Kostnaderna är Claude Codes egen uppskattning (`total_cost_usd_estimate`). Hur den räknas ut är inte kontrollerat, och de sessioner som delas mellan flera arbetsmoment kan inte delas upp (se "Mätvärden som saknas").
 
 ### Mätvärden som saknas (flaggat)
 
@@ -189,6 +204,6 @@ Två ytterligare CSV-rader (`108ab81a`, `997f4ec5`, 15 november) saknar etikett 
 | Förslag | Mätt underlag | Möjlig nackdel för kvalitet och säkerhet |
 |---|---|---|
 | **1. Korta sessioner och rensa kontexten oftare** (`/clear` med sessionsminnet) | Cache-läsningar är 221 M av alla tokens. De längsta sessionerna (`344b232c`, 898 min och 83 M cache-läsningar, och `9cd08258`, 499 min) är också de dyraste per rad | Mer kontext går förlorad, och riggen måste läsa om filer. Risk att ett beslut tappas om sessionsminnet inte räcker. *Antagande: kostnaden följer sessionens längd. Det är inte testat* |
-| **2. Låt läsande agenter (`verifierare`, kanske `granskare`) använda en mindre modell** | Subagenter står för 9–52 % av output-tokens i sessioner där de används (mätt). Idag `inherit` | Risk att ett fel rapporteras som godkänt eller att fynd missas, och att kvaliteten skiljer sig mellan körningar. Ingen modelljämförelse är gjord. *Kräver en ändring av agentkonfigurationen, som inte är gjord* |
+| **2. Låt läsande agenter (`verifierare`, kanske `granskare`) använda en mindre modell** | Subagenter står för 18–52 % av output-tokens i de avslutade sessioner där de används, och 7 % i den pågående (mätt). Idag `inherit` | Risk att ett fel rapporteras som godkänt eller att fynd missas, och att kvaliteten skiljer sig mellan körningar. Ingen modelljämförelse är gjord. *Kräver en ändring av agentkonfigurationen, som inte är gjord* |
 
 Ett tredje, enklare förslag som inte kräver mätning: undvik att köra samma granskning två gånger. Det är ett antagande utan underlag.
