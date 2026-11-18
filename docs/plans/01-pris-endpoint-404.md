@@ -1,6 +1,10 @@
 # Plan: GET /orders/1042/price svarar 404 i stället för 200
 
 **Status:** Utkast, väntar på godkännande. Planen togs fram som verifieringsexempel för skillen `planera` (Session 07).
+**Uppdatering 18 november 2026 (efter R11):** felet är fortfarande kvar (Jest ger 404 för `GET /orders/1042/price`). Det som är verifierat sedan planen skrevs:
+- `python3` på `PATH` är Windows Store-genvägen (`WindowsApps\python3`) och startar ingen Python. Det är den sannolika orsaken till 404 (`legacyPrice.ts` gör alla fel till 404).
+- `psycopg-binary` 3.2.3 saknar version för Python 3.14 (`pip install -r requirements.txt` misslyckades). `requirements.txt` ändrades i R11 till `psycopg[binary]==3.2.10`.
+- `psycopg` och `pytest` är installerade bara i den lokala venv:en `.venv`, inte i den Python som `python3` pekar på. Lösningen i den här planen (miljön) är **inte genomförd**. Texten nedan beskriver läget när planen skrevs (15 november 2026).
 **Datum:** 2026-11-15
 **Underlag:** `PLAN.md`, Kända problem. Felet upptäcktes i Session 01: 15 av 16 Jest-tester gick igenom.
 
