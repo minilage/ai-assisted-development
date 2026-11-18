@@ -63,9 +63,8 @@ def calc_price(order_id):
     net, vat, total = _berakna_pris(summa)
 
     try:
-        f = open(LOGG, "a")
-        f.write("%s %s %s\n" % (datetime.datetime.now().isoformat(), order_id, total))
-        f.close()
+        with open(LOGG, "a") as f:
+            f.write("%s %s %s\n" % (datetime.datetime.now().isoformat(), order_id, total))
     except:
         pass
 
