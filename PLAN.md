@@ -40,7 +40,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ## Aktuell status
 
-**Senast uppdaterad:** 18 november 2026 (efter sammanslagningen av R09 och R11)
+**Senast uppdaterad:** 18 november 2026 (efter sammanslagningen av R09 och R11, R10 steg 1 och granskningen av R11)
 
 ### Klart
 
@@ -110,6 +110,15 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Nästa arbetsmoment
 
+**Överlämning 18 november 2026 (inför `/clear`, se `sessions/session-16-2026-11-18.md`):**
+- **Läge:** `main` (`cbadff1`) har R09, R11 och två docs-PR:er (#1–#4). Pågående arbete ligger på `feature/r10-granskningsrigg` (`e6de311` riggen, `aa93fd4` R11-granskningen), pushad men **inte** sammanslagen och utan PR.
+- **R10, nästa steg (godkänd plan):** steg 2–3: en testgren med planterade fel (slås aldrig ihop), blind granskning med `granskare` och minst ett **bekräftat automatiskt fynd** (befintlig kontroll, till exempel lint eller `test-guard`). Därefter körinstruktion för en okänd PR (`git fetch origin pull/<n>/head`, ej provat), dokumentation, Review och Verify.
+- **Beslut som väntar:** (a) F1 och F14 (SQL-injektion via rabattkoden, hög, provad med körning) och F3 (en header stoppar API:t): egna moment som kräver godkännande. (b) Ska S7 gälla `auth.ts`? (c) Rätta F11–F13 i R11:s dokument? (d) PR för `feature/r10-granskningsrigg`.
+- **Kända fel kvar:** Jest `GET /orders/:id/price` (404, `python3` är Windows Store-genvägen), P1–P8, F3. Python-testerna körs med `.venv/Scripts/python.exe -m pytest tests/legacy`. Kör aldrig Jest och pytest samtidigt (delad `butik_test`).
+- **Arbetssätt:** commit och push bara efter godkännande, med `git add <filer>`, och meddelanden via `git commit -F` från en fil.
+
+**Äldre punkter:**
+
 1. Hooks-momentet enligt `docs/plans/03-hooks.md` (godkänd). Steg 1, sessionsminne, är klart: byggt, testat och verifierat med `/clear` + `ready` och `/compact` (`.claude/hooks/session-memory.js`, se Session 09). Committat och pushat i `5e9832e`. Steg 2, Prettier för `.claude/`, är committat och pushat i `e0e8672`. Massformateringen är committad och pushad i `a7ed197`. Steg 3, kodkontroller (`.claude/hooks/check-code.js`), är byggt med TDD och registrerat i `settings.json`. Radsluten är lösta (`"endOfLine": "auto"`). PostToolUse och Stop är verifierade i riktiga körningar i samma session, utan omstart. Committat och pushat i `991bd26` (se Session 10).
    - Steg 4 (spärr för huvudsessionen, `main-guard.js`) är byggt med TDD, registrerat i `settings.json` och verifierat i en riktig körning, där alla provkommandon blockerades. Verify: 152 av 152 godkända. `RIG_PROTECTED` omfattar nu hela `.claude/hooks/` (se Session 11).
    - De tre fynden med allvarlighetsgrad medel från granskningen är rättade: 155 av 155 godkända och en ny riktig körning. Committat och pushat i `7564f3c`. Hooks-momentet (plan 03) är klart.
@@ -145,7 +154,9 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
    - **Gjort:** `granskare` med `granska-standard` granskade hela diffen (säkerhet, korrekthet, struktur, kodstandard, testtäckning). Verdikt: godkänd med anmärkningar, 12 fynd, varje fynd med fil och rad, orsak, rekommendation och vilken kontroll som kunde fånga det (automatiskt eller manuellt).
    - **Rättat:** F1 (test av elementformen, med mutationsdemonstration: 1 rött av 40 för tre mutationer) och F2 (commit-hänvisningar). F6 och F7 är godtagna som låga fynd.
    - **Bekräftat:** F3 (hög, säkerhet) provkördes i en isolerad process 18 november 2026. Det är en befintlig sårbarhet och är **inte rättad**.
-   - **Kvar för R10:** en tilldelad eller oförberedd PR, ett bekräftat brott mot en standardregel i ny kod (de nuvarande fynden inom kodstandard är testluckor och S7/S8 i `auth.ts`), och att riggen används på något oförberett vid seminariet.
+   - **R10, steg 1 (plan godkänd 18 november 2026), `feature/r10-granskningsrigg`, commit `e6de311`:** `granska-standard` och `granskare` ger samma fyndtabell med kolumnerna Område, Status (Bekräftat eller Risk), Kontroll/hook och Automatiskt/Manuellt. Checklistan har U1–U9 utöver standarden och en `Kontroll:`-rad per regel, och en ny `kontroller.md` listar de kontroller som finns. Byggt med TDD (5 röda tester först), riggsviten 193 av 193 (189 före), mutationsprov 10 av 10 röda.
+   - **R10, granskning av R11:s PR (`docs/examination/r10-granskning-pr-r11.md`, commit `aa93fd4`):** 23 fynd. **S3** (F1, F14, F3, F7) och **S12** (F2) är bekräftade. F1 (SQL-injektion via rabattkoden) och F14 (staplade satser) är provade mot testdatabasen med oskadliga satser. Bara F20 bedömdes som Automatiskt. Ingenting är rättat.
+   - **Kvar för R10:** steg 2–3 (planterade fel och ett riktigt automatiskt fynd), körinstruktion för en okänd PR, och att riggen används på något oförberett vid seminariet. Kodstandard har nu bekräftade brott (S3, S12), men de ligger i kod som R11 inte skrev. Om S7 ska gälla `auth.ts` är ett öppet beslut.
 6. R11, modernisering av `src/legacy/price_calc.py` (Session 15, minimal omfattning):
    - **Codemap och analys:** `docs/legacy/price_calc.md` (moduler, beroenden, problem P1–P10).
    - **Karakteriseringstester:** `tests/legacy/test_price_calc.py` och `tests/legacy/conftest.py`: 13 tester, varav 6 låser kända fel. 13 av 13 godkända mot den oförändrade koden. Mutationsprov på kopior: 9, 6 och 2 röda av 13.
@@ -159,3 +170,4 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 - Den sista raden i filen avslutades 17 november 2026 02:17. Sessionerna efter det (slutet av R07, R09, R10 och R11, 17–18 november 2026) saknar rad, eftersom `SessionEnd`-hooken skriver raden först när sessionen avslutas. Inga värden för tokens, kostnad eller tid är inskrivna för hand, och de ska inte uppskattas i efterhand.
 - Raderna 7 och 8 har tomma fält (korta sessioner utan mätning), vilket är känt sedan tidigare.
+- **Den här sessionen (`344b232c-33f3-4222-b9f8-227e080b67bf`):** raden skrivs av `SessionEnd`-hooken när sessionen avslutas, också vid `/clear`. Kontrollera `metrics/arbetsmoment.csv` efteråt. Ögonblicksbilden från statuslinjen (uppmätt, 18 november 2026 12:00:30 UTC, före avslutet) finns i `sessions/session-16-2026-11-18.md`. Sessionsnamnet i raden blir troligen det första ämnet ("R09 orders pagination and status filtering"), eftersom namnet kommer från samtalet. Det är en känd begränsning.
