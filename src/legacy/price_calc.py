@@ -3,6 +3,7 @@
 # OBS rör inte avrundningen, ekonomi har stämt av mot den.
 
 import os, sys, json, datetime
+from dataclasses import dataclass
 from decimal import Decimal
 import psycopg
 
@@ -13,11 +14,11 @@ MOMS = 25
 LOGG = os.path.join(os.path.dirname(__file__), "price_calc.log")
 
 
+@dataclass(eq=False)
 class Pris:
-    def __init__(self, net, vat, total):
-        self.net = net
-        self.vat = vat
-        self.total = total
+    net: Decimal
+    vat: Decimal
+    total: Decimal
 
 
 def _kapa(x):
