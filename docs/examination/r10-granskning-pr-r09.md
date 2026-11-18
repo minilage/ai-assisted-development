@@ -4,7 +4,7 @@
 **Krav:** R10 (`docs/examination/requirements.md:224`)
 **Granskat:** hela PR-diffen `git diff main...feature/r09-orders-pagination` (6 commits, 8 filer, merge-bas `e3dbda2`). R07-commiten `9ab35b8` på `main` ingår inte.
 **Gjort av:** `granskare` med `granska-standard`. Fynden är kontrollerade av huvudsessionen enligt avsnittet "Kontroll av fynden".
-**Begränsning:** PR:n på GitHub är inte öppnad ännu (`gh` saknas). Granskningen gäller grenens diff, som blir PR:ns innehåll. Inga tester eller kontroller kördes under granskningen, och inget ändrades, slogs ihop eller stängdes under den. Rättningarna av F1 och F2 gjordes efteråt (se "Åtgärder efter granskningen"). Resten av dokumentet beskriver läget vid granskningen, om inget annat anges.
+**Begränsning:** granskningen gjordes på grenens diff innan PR:n var öppnad (`gh` saknades). PR:n (#1) öppnades därefter och slogs ihop i `main` den 18 november 2026 (merge-commit `fb8888d`). Granskningen gjordes alltså inte på själva GitHub-PR:n. Inga tester eller kontroller kördes under granskningen, och inget ändrades, slogs ihop eller stängdes under den. Rättningarna av F1 och F2 gjordes efteråt (se "Åtgärder efter granskningen"). Resten av dokumentet beskriver läget vid granskningen, om inget annat anges.
 
 **Verdikt: godkänd med anmärkningar.** Implementationen är korrekt vid läsning: parametriserad SQL, rätt källa för kund-id, stabil sortering, validering som tål arrayer och objekt, och dokumenterat kontrakt. Inget fel som R09 har introducerat kräver att PR:n stoppas. F1 och F2 bedömdes böra rättas före sammanslagning och är nu rättade. **F3 är en bekräftad, allvarlig sårbarhet som fanns i kodbasen före R09** (en header kan stoppa API:t). Den kräver ett beslut, men ligger utanför R09:s ändringar.
 

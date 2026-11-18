@@ -3,7 +3,7 @@
 **Status:** Godkänd 2026-11-16 och genomförd 2026-11-17.
 - Steg 1–4 är klara. 1b, 1c och 2b kom till efter granskningarna.
 - Regressionen H1/H2 från 2b är rättad och omgranskad: godkänd med anmärkningar, som bara gäller dokumentationen.
-- M1 och M2 är dokumenterade och väntar på beslut. ADR: `docs/adr/0001-testskydd-i-main-guard.md`. Logg: `sessions/session-13-2026-11-16.md`. Inte committad.
+- M1 och M2 är dokumenterade och väntar på beslut. ADR: `docs/adr/0001-testskydd-i-main-guard.md`. Logg: `sessions/session-13-2026-11-16.md`. Committad och pushad i `e3dbda2`.
 **Not om radnummer:** Research-avsnittet beskriver läget före steg 1. Radhänvisningarna till `main-guard.js` där (`:24`, `:201`, `:143`, `:129` och `:245`) gäller filen i `HEAD` (`b2647f9`).
 **Beslut (användaren, 2026-11-16):** rekommendationerna i alla sex öppna frågor är godkända:
 1. Försvagade påståenden blockeras inte.

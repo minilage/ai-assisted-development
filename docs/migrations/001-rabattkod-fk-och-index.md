@@ -3,7 +3,7 @@
 **Status:** Plan, **inte körd**. Inget SQL i det här dokumentet har körts mot någon databas, och `db/schema.sql` är oförändrad. SQL-satserna är inte syntaxkontrollerade mot Postgres. De ska provas på en kopia av databasen innan de används.
 **Datum:** 2026-11-18
 **Krav:** R11, avsnittet "Databasmigrering" (`docs/examination/requirements.md:263-266`): stegvis migrering, expand/contract och vilka steg som går att återställa.
-**Underlag:** `docs/legacy/price_calc.md` (codemap), `db/schema.sql:17-30`, `src/services/orderService.ts:38-45`, F4 i `docs/examination/r10-granskning-pr-r09.md` (inget index på `orders.customer_id`). **Obs:** granskningsdokumentet och ADR 0002 finns på grenen `feature/r09-orders-pagination` och inte på `main`, där den här grenen utgår från. Hänvisningarna fungerar först när R09-grenen är sammanslagen.
+**Underlag:** `docs/legacy/price_calc.md` (codemap), `db/schema.sql:17-30`, `src/services/orderService.ts:38-45`, F4 i `docs/examination/r10-granskning-pr-r09.md` (inget index på `orders.customer_id`). Granskningsdokumentet och ADR 0002 kom från R09, som är sammanslagen i `main` (PR #1, `fb8888d`), så hänvisningarna fungerar nu. När den här planen skrevs fanns de bara på R09-grenen.
 
 ## Varför de här två ändringarna
 
@@ -11,7 +11,7 @@
    - `POST /orders` sparar vilken text som helst som `discount_code` (`src/services/orderService.ts:38-45`).
    - Den äldre prisberäkningen ignorerar en okänd kod utan fel (`src/legacy/price_calc.py:41-45`), så beställningen får fullt pris utan att någon märker det.
    - `discounts.code` är redan primärnyckel (`db/schema.sql:17-22`), så den kan vara mål för en främmande nyckel.
-2. **Index `orders(customer_id, created_at DESC, id DESC)`.** `orders` saknar index utöver primärnyckeln (`db/schema.sql:24-30`). `GET /customers/me/orders` filtrerar på `customer_id` och sorterar på `created_at DESC, id DESC` (ADR 0002 och F4 i R10-granskningen, båda på R09-grenen, se ovan).
+2. **Index `orders(customer_id, created_at DESC, id DESC)`.** `orders` saknar index utöver primärnyckeln (`db/schema.sql:24-30`). `GET /customers/me/orders` filtrerar på `customer_id` och sorterar på `created_at DESC, id DESC` (ADR 0002 och F4 i R10-granskningen).
 
 ## Strategi: expand/contract
 

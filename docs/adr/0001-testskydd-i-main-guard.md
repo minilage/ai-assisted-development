@@ -1,6 +1,6 @@
 # ADR 0001: Skydd mot borttagna och avstängda tester i main-guard
 
-**Status:** Accepterad (17 november 2026). Inte committad.
+**Status:** Accepterad (17 november 2026). Committad och pushad i `e3dbda2`.
 **Datum:** 2026-11-16 (förslag) och 2026-11-17 (accepterad efter Verify).
 **Krav:**
 - R07 (`docs/examination/requirements.md:159`)

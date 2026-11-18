@@ -2,7 +2,7 @@
 
 **Datum:** 2026-11-18
 **Krav:** R11, kodanalys och karakteriseringstester (`docs/examination/requirements.md:245-270`)
-**Gren:** `feature/r11-legacy-modernization`
+**Gren:** `feature/r11-legacy-modernization` (sammanslagen i `main` som PR #2, `d25e11b`, 18 november 2026)
 **Status:** Analysen bygger på kodläsning. Beteendena i avsnitt 3 är verifierade av 13 karakteriseringstester (`tests/legacy/test_price_calc.py`, 13 av 13 godkända mot den oförändrade koden, körda två gånger). Mutationsprovet står i avsnitt 5.
 
 **Radnummer:** alla `price_calc.py:rad` i det här dokumentet avser **originalet före refaktoreringen** (`HEAD`, 66 rader). Efter refaktoreringen är raderna förskjutna (till exempel ligger `conn` på rad 11 och SQL-satserna på rad 49, 55 och 59).

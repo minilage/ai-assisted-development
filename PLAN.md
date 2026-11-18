@@ -26,9 +26,9 @@ Riggen ska innehålla:
 
 När riggen är på plats ska jag använda den för följande uppgifter från kursprojektet:
 
-- [x] **Ny funktion (R09):** user story 3, sidindelning och statusfilter för `GET /customers/me/orders`, är byggd, granskad och verifierad på grenen `feature/r09-orders-pagination` (Session 14). Inte sammanslagen med `main` ännu.
-- [ ] **Kodgranskning:** Använda riggen för att granska en tilldelad pull request och identifiera problem med säkerhet, struktur och kodstandard.
-- [ ] **Modernisering:** Undersöka den äldre Python-modulen, skapa karakteriseringstester och genomföra mindre refaktoreringar med tester som säkerhetsnät.
+- [x] **Ny funktion (R09):** user story 3, sidindelning och statusfilter för `GET /customers/me/orders`, är byggd, granskad och verifierad (Session 14). Sammanslagen i `main` via PR #1 (merge-commit `fb8888d`, 18 november 2026).
+- [ ] **Kodgranskning (R10):** riggen har granskat R09:s pull request med `granskare` och `granska-standard` (`docs/examination/r10-granskning-pr-r09.md`). Kvar: en tilldelad eller oförberedd PR, och ett bekräftat brott mot en standardregel i ny kod (se punkt 5 under "Nästa arbetsmoment").
+- [x] **Modernisering (R11):** den äldre Python-modulen är analyserad, har 13 karakteriseringstester och tre refaktoreringssteg, och en migreringsplan finns. Minimal omfattning, se punkt 6 under "Nästa arbetsmoment". Sammanslagen i `main` via PR #2 (merge-commit `d25e11b`, 18 november 2026).
 
 ## Arbetssätt
 
@@ -40,7 +40,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ## Aktuell status
 
-**Senast uppdaterad:** 16 november 2026
+**Senast uppdaterad:** 18 november 2026 (efter sammanslagningen av R09 och R11)
 
 ### Klart
 
@@ -72,13 +72,19 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Kända problem
 
-- **Beslut 16 november 2026:** filer i `src/` och `tests/` ändras inte förrän riggen testas på riktigt. Lärarnas avsiktliga övningsfel ska finnas kvar till dess, till exempel SQL-injektion, lösenord som standardvärden och felfall utan tester.
+- **Beslut 16 november 2026:** filer i `src/` och `tests/` ändras inte förrän riggen testas på riktigt. Lärarnas avsiktliga övningsfel ska finnas kvar till dess, till exempel SQL-injektion, lösenord som standardvärden och felfall utan tester. (R09 och R11 har därefter ändrat `src/` och `tests/` med särskilt godkännande för varje moment. Övningsfelen är fortfarande inte rättade.)
+- **Kända risker efter R09 och R11 (inget är rättat, och inget ska anses löst):**
+  - **F3 (hög, bekräftat med körning 18 november 2026):** `X-Customer-Id: 99999999999` passerar `requireCustomer` (`src/auth.ts:9-10`, ingen int4-gräns) och ger ett databasfel i en `async`-handler utan felhanterare. Node 24 avslutar då hela processen. Felet fanns före R09, men gäller också den nya endpointen. Se `docs/examination/r10-granskning-pr-r09.md`.
+  - **P1 (hög):** SQL i `src/legacy/price_calc.py` och `jobs/nightly_report.py:8` byggs med `%`-formatering (injektion). Bara `order_id` är provat (`tests/legacy/test_price_calc.py`, test 13). Se `docs/legacy/price_calc.md`.
+  - **Jest-testet för priset (känt fel):** `tests/orders.test.ts:68` (`GET /orders/:id/price`) ger 404 i stället för 200. Orsaken är verifierad 18 november 2026: `python3` på `PATH` är Windows Store-genvägen (`WindowsApps\python3`) och startar ingen Python, så `execFile("python3", …)` i `src/pricing/legacyPrice.ts` misslyckas och alla fel blir 404 (P8). `psycopg` finns bara i den lokala venv:en `.venv`. Inget är ändrat.
+  - **P2 och P3 (medel):** den äldre modulen kapar i stället för att avrunda, och rabattens giltighetstid kontrolleras inte. Ekonomi har stämt av mot avrundningen, så ändringar kräver ett affärsbeslut. **P6 (medel):** anslutning vid import. Se `docs/legacy/price_calc.md`.
+  - **Övriga R10-fynd:** F4 (inget index på `orders.customer_id`), F5 (`total` och `items` hämtas i två frågor), F6 och F7 (godtagna som låga) och F8–F10 är öppna (se granskningsdokumentet).
 
 - Löst i Session 10: `npm run format:check` underkände de 15 `.ts`-filerna bara för radslut (CRLF i arbetskopian). `.prettierrc.json` har nu `"endOfLine": "auto"`, och `format:check` godkänns.
-- Jest-testet för `GET /orders/1042/price` misslyckades: API:t svarade 404 i stället för förväntade 200. En plan med troliga orsaker finns i `docs/plans/01-pris-endpoint-404.md`: `psycopg` saknas, och `python3` är en omdirigering. Planen väntar på godkännande.
+- Jest-testet för `GET /orders/1042/price` misslyckas fortfarande (404 i stället för 200, se "Kända risker" ovan). En plan med troliga orsaker finns i `docs/plans/01-pris-endpoint-404.md`. Efter 18 november 2026 är orsaken till 404 verifierad för `python3`, och planen väntar fortfarande på godkännande.
 - Skills: alla fyra är skapade (`tdd`, `granska-standard`, `karakterisera` och `planera`) och har strukturtester i `.claude/skills/skills.test.js` (se Session 07). `granska-standard` och `planera` är också testade i praktiken. `tdd` och `karakterisera` testas vid den första riktiga uppgiften.
-- `pytest` och `psycopg` är inte installerade i Python 3.14, så `npm run test:legacy` går inte att köra. Installationen kräver godkännande.
-- Granskningen av `src/` med `granska-standard` hittade SQL-injektion i `src/legacy/price_calc.py:42`, anslutningssträngar med lösenord som standardvärde och felfall som saknar tester (se Session 07). Inget är rättat.
+- `pytest` 8.3.3 och `psycopg` 3.2.10 är installerade i den lokala venv:en `.venv` (R11, Session 15). `psycopg-binary` 3.2.3 saknade version för Python 3.14, så `requirements.txt` ändrades till `psycopg[binary]==3.2.10` med särskilt godkännande. Python-testerna körs med `.venv/Scripts/python.exe -m pytest tests/legacy`. `npm run test:legacy` anropar `pytest` utan sökväg och fungerar inte utan att venv:en ligger på `PATH`. `verifierare` kan inte köra pytest i venv:en, eftersom `agent-guard` kräver exakt `python -m pytest` eller `pytest`.
+- Granskningen av `src/` med `granska-standard` hittade SQL-injektion i `src/legacy/price_calc.py` (rad 42 i originalet), anslutningssträngar med lösenord som standardvärde och felfall som saknar tester (se Session 07). Inget är rättat. SQL-injektionen är nu låst av ett karakteriseringstest (P1 ovan).
 - Hooks: alla fem hookskript finns och är registrerade: `record-metrics.js`, `agent-guard.js`, `session-memory.js`, `check-code.js` och `main-guard.js` (Session 11). Räknat som funktioner är de 8.
   - `main-guard` (PreToolUse för huvudsessionen) är aktiv och verifierad i en riktig körning, och den är committad och pushad i `7564f3c`.
   - Granskningen gav 3 fynd med allvarlighetsgrad medel. De är rättade med TDD och verifierade (Session 11).
@@ -127,12 +133,29 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
    - **Steg 3:** `Edit(jest.config.js)` och `Edit(pytest.ini)` står under ask. Riktig körning: frågan visades och nekades.
    - **Steg 4:** `docs/adr/0001-testskydd-i-main-guard.md` finns.
    - **Läget nu:** 189 av 189 i riggsviten, 52 av 52 mutationer för `main-guard` och 37 av 37 för `test-guard`. Committat och pushat i `e3dbda2` (Session 13). M1, M2 och övriga kända begränsningar är dokumenterade, och användaren har godkänt att R07 avslutas med dem.
-   - Inte inkopplad i `main-guard`. Inte committad.
 4. R09, sidindelning och statusfilter för `GET /customers/me/orders`, enligt `docs/plans/05-sidindelning-orders.md` (godkänd 17 november 2026, svarsform A och offset-paginering, ADR `docs/adr/0002-sidindelning-orders.md`):
    - **Build med TDD:** 24 röda tester av rätt skäl, därefter implementation, och regressionstester för `page=01` och upprepade parametrar.
    - **Verify:** 39 av 39 i `tests/customers.test.ts` och 49 av 50 i hela sviten. Det enda felet är det kända `GET /orders/:id/price`. `lint`, `typecheck` och `format:check` är godkända.
    - **Mutationer:** alla sex körda mutationer gav minst ett rött test.
    - **Review:** 0 hög, 0 medel och 3 låga fynd i vardera av två omgångar. Fynden är rättade eller dokumenterade.
    - **Brytande ändring:** svaret är nu ett objekt med `items`, och högst 20 beställningar returneras utan query (ADR 0002).
-   - **Git:** sex commits på `feature/r09-orders-pagination` (`798824e`, `d133ea3`, `317a321`, `3416c8a`, `9c0db1a`, `240af7c`). Senare commits: se `git log main..feature/r09-orders-pagination`. Pull request mot `main` ska användas som underlag för R10 och är inte sammanslagen.
+   - **Git:** feature-commits på `feature/r09-orders-pagination`, bland annat `798824e` (docs), `d133ea3` (test), `317a321` (feat), `240af7c` (ADR och `PLAN.md`), `17352a9` (F1) och `bb55e6d`. Full lista: `git log fb8888d^1..fb8888d^2`. Sammanslagen i `main` som **PR #1** (merge-commit `fb8888d`, 18 november 2026) med alla commits bevarade (ingen squash).
    - **Kvar:** ingen testad gräns för mycket stort `page`, duplicerad testdata och att `COUNT`-frågan inte är mutationstestad separat (Session 14).
+5. R10, granskning av R09:s pull request (`docs/examination/r10-granskning-pr-r09.md`, Session 14):
+   - **Gjort:** `granskare` med `granska-standard` granskade hela diffen (säkerhet, korrekthet, struktur, kodstandard, testtäckning). Verdikt: godkänd med anmärkningar, 12 fynd, varje fynd med fil och rad, orsak, rekommendation och vilken kontroll som kunde fånga det (automatiskt eller manuellt).
+   - **Rättat:** F1 (test av elementformen, med mutationsdemonstration: 1 rött av 40 för tre mutationer) och F2 (commit-hänvisningar). F6 och F7 är godtagna som låga fynd.
+   - **Bekräftat:** F3 (hög, säkerhet) provkördes i en isolerad process 18 november 2026. Det är en befintlig sårbarhet och är **inte rättad**.
+   - **Kvar för R10:** en tilldelad eller oförberedd PR, ett bekräftat brott mot en standardregel i ny kod (de nuvarande fynden inom kodstandard är testluckor och S7/S8 i `auth.ts`), och att riggen används på något oförberett vid seminariet.
+6. R11, modernisering av `src/legacy/price_calc.py` (Session 15, minimal omfattning):
+   - **Codemap och analys:** `docs/legacy/price_calc.md` (moduler, beroenden, problem P1–P10).
+   - **Karakteriseringstester:** `tests/legacy/test_price_calc.py` och `tests/legacy/conftest.py`: 13 tester, varav 6 låser kända fel. 13 av 13 godkända mot den oförändrade koden. Mutationsprov på kopior: 9, 6 och 2 röda av 13.
+   - **Refaktorering:** tre beteendebevarande steg, var och en egen commit med gröna tester (`424dd87`, `624c06f`, `9d485fc`). Beroendet i en egen commit (`51b8e32`, `psycopg[binary]` 3.2.10) och testerna i en egen (`b01c257`).
+   - **Migreringsplan:** `docs/migrations/001-rabattkod-fk-och-index.md` (expand/contract för en främmande nyckel och ett index, med återställning per fas). **Inget SQL är körd** och `db/schema.sql` är oförändrad.
+   - **Logg:** `sessions/session-15-2026-11-18.md`. Sammanslagen i `main` som **PR #2** (merge-commit `d25e11b`, 18 november 2026).
+   - **Kvar:** P1–P8 är dokumenterade men inte rättade, och migreringen är bara en plan.
+7. **Verifiering av den sammanslagna `main` (`d25e11b`, 18 november 2026):** Jest 50 av 51 (bara det kända felet för priset), `pytest tests/legacy` 13 av 13 (körda efter varandra, aldrig parallellt, eftersom sviterna delar `butik_test`), `lint`, `typecheck` och `format:check` godkända. Slutträdet är identiskt med det som simulerades före sammanslagningen.
+
+### Mätning (`metrics/arbetsmoment.csv`)
+
+- Den sista raden i filen avslutades 17 november 2026 02:17. Sessionerna efter det (slutet av R07, R09, R10 och R11, 17–18 november 2026) saknar rad, eftersom `SessionEnd`-hooken skriver raden först när sessionen avslutas. Inga värden för tokens, kostnad eller tid är inskrivna för hand, och de ska inte uppskattas i efterhand.
+- Raderna 7 och 8 har tomma fält (korta sessioner utan mätning), vilket är känt sedan tidigare.
