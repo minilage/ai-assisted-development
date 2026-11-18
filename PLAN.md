@@ -40,7 +40,7 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ## Aktuell status
 
-**Senast uppdaterad:** 18 november 2026 (efter PR #6 och R21-utkastet, Session 18)
+**Senast uppdaterad:** 18 november 2026 (efter PR #7, Session 18 och slutgranskningen före inlämning) *(tidigare: "efter PR #6 och R21-utkastet")*
 
 ### Klart
 
@@ -110,10 +110,13 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Nästa arbetsmoment
 
-**Överlämning 18 november 2026 (efter PR #6, se `sessions/session-18-2026-11-18.md`):**
-- **Läge:** `origin/main` = `7c7951a` (PR #1–#6 sammanslagna, `git rev-list --count origin/main..HEAD` ger 0 för arbetsgrenen `docs/krav-bevis-r16-r19`). Taggen `inlamning` finns inte. Session 18:s dokument (`sessions/session-18-2026-11-18.md`, `docs/examination/r21-erfarenheter.md`, R21- och R22-raderna i `docs/examination/krav-bevis.md` och den här överlämningen) ligger på grenen `docs/r21-erfarenheter` (från `origin/main`), pushad men **inte** sammanslagen. Commit-hash: se `git log docs/r21-erfarenheter`. Ocommittat och ska inte följa med utan besked: `metrics/arbetsmoment.csv` (äldre ändring).
-- **Gjort (Session 18):** sessionslogg för arbetet efter PR #5 (R16, R19, R20), och ett utkast till R21 (erfarenheter och lärdomar) med beläggen kontrollerade av `granskare` (godkänd med anmärkningar, rättade).
-- **Nästa steg:** användarens genomgång av R21 (prioriteringarna i avsnitt 5 är en bedömning), PR och sammanslagning av `docs/r21-erfarenheter` efter godkännande, uppdatering av `requirements.md` avsnitt 7 (föråldrat), examinationsmallen (R23), muntlig förberedelse (R24) och taggen (R22, sist).
+**Överlämning 18 november 2026 (efter PR #7, se `sessions/session-18-2026-11-18.md`):**
+- **Läge (kontrollerat med `git fetch` 18 november 2026):** `origin/main` = `870d475` (Merge pull request #7, PR #1–#7 sammanslagna). Session 18:s dokument (`sessions/session-18-2026-11-18.md`, `docs/examination/r21-erfarenheter.md`, R21- och R22-raderna i `krav-bevis.md`) är därmed på `main` via `697c442`. *(Tidigare stod här: "`origin/main` = `7c7951a` (PR #1–#6)" och att dokumenten låg på `docs/r21-erfarenheter`, pushad men inte sammanslagen.)*
+- **Väntar på sammanslagning:** grenen `docs/kostnadssiffror-csv` (pushad, ingen PR öppnad, hash: se `git log docs/kostnadssiffror-csv`). Första commiten (`1e8b9af`) har de uppdaterade kostnadssiffrorna i `krav-bevis.md` (R19) och `r20-risker-och-teamintroduktion.md` (13 rader, 105,57 USD). En andra commit har den här överlämningen (`PLAN.md`) och `metrics/arbetsmoment.csv` (13 rader, de två nya raderna för `344b232c` och `0d2737f1`, inga befintliga rader ändrade). Tills grenen är sammanslagen står 99,38 USD (12 rader) i dokumenten på `main`, och `main` har 11 rader i CSV:n.
+- **Inte committat (git status):** `inlamning.pdf` (ospårad i rotkatalogen, ingår inte i någon commit). *(Tidigare stod här också `metrics/arbetsmoment.csv`, som nu ligger på grenen ovan.)*
+- **Taggen `inlamning` finns inte** (`git tag -l` och `git ls-remote --tags origin` är tomma). Användaren har beslutat att inte skapa den i samband med `docs/kostnadssiffror-csv`. Den skapas sist och kräver särskilt godkännande.
+- **Gjort (Session 18):** sessionslogg för arbetet efter PR #5 (R16, R19, R20), och R21 (erfarenheter och lärdomar) med beläggen kontrollerade av `granskare` (godkänd med anmärkningar, rättade).
+- **Nästa steg:** användarens genomgång av R21 (prioriteringarna i avsnitt 5 är en bedömning), PR och sammanslagning av `docs/kostnadssiffror-csv` (efter ditt beslut), beslut om `inlamning.pdf`, uppdatering av `requirements.md` avsnitt 7 (föråldrat), examinationsmallen (R23), muntlig förberedelse (R24) och taggen (R22, sist).
 - Överlämningen nedan gäller läget efter R10 steg 2 och är **föråldrad** i fråga om grenar och PR (R10-grenen och PR #5–#6 är sammanslagna). Beslutslistan i den (F1/F14/F3, S7, F11–F13, `main-guard.js`, testgrenen) gäller fortfarande.
 
 **Tidigare överlämning 18 november 2026 (efter R10 steg 2, se `sessions/session-17-2026-11-18.md`):**
@@ -178,6 +181,6 @@ Planen uppdateras under arbetets gång och används tillsammans med sessionslogg
 
 ### Mätning (`metrics/arbetsmoment.csv`)
 
-- Den sista raden i filen avslutades 17 november 2026 02:17. Sessionerna efter det (slutet av R07, R09, R10 och R11, 17–18 november 2026) saknar rad, eftersom `SessionEnd`-hooken skriver raden först när sessionen avslutas. Inga värden för tokens, kostnad eller tid är inskrivna för hand, och de ska inte uppskattas i efterhand.
+- Den sista raden i arbetskatalogens fil (13 rader) avslutades 18 november 2026 16:15 (`0d2737f1`, R10 steg 2). Raderna för `344b232c` (R09, avslut 18 november 13:11) och `0d2737f1` skrevs av `SessionEnd`-hooken vid `/clear`. Filen är committad på grenen `docs/kostnadssiffror-csv` men **inte** på `main` (`main` har 11 rader tills grenen slås ihop). Sessioner efter 16:15 (Session 18) saknar rad tills `SessionEnd` har körts. Inga värden för tokens, kostnad eller tid är inskrivna för hand, och de ska inte uppskattas i efterhand. *(Tidigare stod här: "Den sista raden avslutades 17 november 02:17 … saknar rad".)*
 - Raderna 7 och 8 har tomma fält (korta sessioner utan mätning), vilket är känt sedan tidigare.
-- **Den här sessionen (`344b232c-33f3-4222-b9f8-227e080b67bf`):** raden skrivs av `SessionEnd`-hooken när sessionen avslutas, också vid `/clear`. Kontrollera `metrics/arbetsmoment.csv` efteråt. Ögonblicksbilden från statuslinjen (uppmätt, 18 november 2026 12:00:30 UTC, före avslutet) finns i `sessions/session-16-2026-11-18.md`. Sessionsnamnet i raden blir troligen det första ämnet ("R09 orders pagination and status filtering"), eftersom namnet kommer från samtalet. Det är en känd begränsning.
+- **Sessionen `344b232c-33f3-4222-b9f8-227e080b67bf` (R09):** raden är skriven (avslut `clear`, 898,5 min vägg, 20,2999 USD uppskattat). *(Tidigare stod här att raden skulle skrivas vid avslutet.)* Kontrollera alltid `metrics/arbetsmoment.csv` efter `/clear`. Ögonblicksbilden från statuslinjen (uppmätt, 18 november 2026 12:00:30 UTC, före avslutet) finns i `sessions/session-16-2026-11-18.md`. Sessionsnamnet i raden blir troligen det första ämnet ("R09 orders pagination and status filtering"), eftersom namnet kommer från samtalet. Det är en känd begränsning.
