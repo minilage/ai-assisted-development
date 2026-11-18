@@ -31,7 +31,7 @@ Kontroller som körts: `npm run lint`, `typecheck` och `format:check` (godkända
 | **R16** Orkestrering och modellval | Faserna i `CLAUDE.md`. Resultat per fas i `docs/plans/` och `sessions/`. **Modellanvändning: se avsnittet nedan** | Modellanvändning och subagentandel är mätta ur transkript. Stoppvillkor och faser är lästa i `.claude/agents/` och `CLAUDE.md`. Parallellkörning är belagd i loggar och i transkript. Se avsnittet R16 nedan | Gräns för kostnad, tid och antal försök är inte konfigurerad. Kostnad med en större modell saknas (inget prisunderlag). Att worktrees valdes bort är inte dokumenterat som ett beslut *(en tidigare version av den här raden sa felaktigt att inga stoppvillkor fanns. `maxTurns` och avsnitten "Stoppvillkor" finns i agentfilerna)* |
 | **R17** Kodgenerering och granskning | `kontroller.md`, granskningsdokumenten, `check-code.js`, `test-guard.js` | Fil läst | "Vad varje kontroll kan upptäcka" och "när jag godkänner" som sammanställning |
 | **R18** Modernisering | Som R11, plus Session 15 | Fil läst | Rapportavsnittet och det som återstår |
-| **R19** Mätningar | `metrics/arbetsmoment.csv`: 12 rader per **session**, med tokens, tid, kostnad (uppskattning) och modell | Mätt: CSV-siffrorna för tokens stämmer exakt med transkripten för alla 10 sessioner med rad. Se avsnittet R19 nedan | **Session → arbetsmoment kan inte beläggas för 5 av 10 märkta rader** (session-id står bara i 5 loggar). Kostnad per moment saknas. Rad för den pågående sessionen (`0d2737f1`) saknas tills `SessionEnd` skriver den. Antal fel som kontrollerna fångat är inte sammanställt över alla sessioner. Prisunderlaget bakom kostnaden är inte kontrollerat |
+| **R19** Mätningar | `metrics/arbetsmoment.csv`: 13 rader per **session**, med tokens, tid, kostnad (uppskattning) och modell *(18 november 15:19 stod här 12 rader, före raden för `0d2737f1`)* | Mätt: CSV-siffrorna för tokens stämmer exakt med transkripten för 10 sessioner med rad (kontrollerat 18 november, före raden för `0d2737f1`). Raden för `0d2737f1` är inte jämförd mot transkriptet. Se avsnittet R19 nedan | **Session → arbetsmoment kan inte beläggas för 5 av 10 märkta rader** (session-id står bara i 5 loggar). Kostnad per moment saknas. Raden för `0d2737f1` saknades 18 november 15:19 och finns nu i CSV:n (skriven av `SessionEnd`). Den pågående sessionen (Session 18) har ännu ingen rad. Antal fel som kontrollerna fångat är inte sammanställt över alla sessioner. Prisunderlaget bakom kostnaden är inte kontrollerat |
 | **R20** Team och risker | Risker finns spridda i `docs/plans/*` och granskningsdokumenten | Delvis | Införande i ett team med fem utvecklare och en riskanalys med minst fem risker |
 | **R21** Erfarenheter | `docs/examination/r21-erfarenheter.md` (utkast 18 november, granskat av `granskare`: godkänd med anmärkningar, rättade, `sessions/session-18-2026-11-18.md`) | Fil läst. Beläggen är kontrollerade mot källfilerna men inte omkörda | Användarens genomgång. Prioriteringarna i avsnitt 5 är en bedömning som ska fastställas. Sessionerna 03–07, 09, 12 och 15 är inte lästa i sin helhet |
 | **R22** Repo och Git | PR #1–#6 sammanslagna. `origin/main` = `7c7951a` (Merge pull request #6, 18 november 2026), kontrollerat med `git fetch` och `git ls-remote` i Session 18. *(Tidigare stod här "PR #1–#5, `main` = `4f14b42`". Det gällde före PR #6.)* | Körd (`git fetch`, `git rev-parse`) | **Taggen `inlamning` saknas** (`git tag -l` är tom, kontrollerat i Session 18). Skapas sist, med användarens godkännande |
@@ -49,7 +49,7 @@ Kontroller som körts: `npm run lint`, `typecheck` och `format:check` (godkända
 | Sessionerna med Opus (CSV-raderna är daterade 15–16 november) använde `claude-opus-5-5`, både huvudsession och subagenter | Modellnamn i transkript: sessionerna `285e1567`, `9cd08258`, `dfe9fec3`, `f03e7ab5` (subagenter: 95, 86, 34 och 174 anrop) samt fem sessioner utan subagenter |
 | Sessionerna från 17 november använder `claude-sonnet-5-5`, både huvudsession och subagenter | Sessionerna `344b232c` (674 huvudanrop, 345 subagentanrop, 18 agenter) och `0d2737f1` (210 och 26, 3 agenter) |
 | I alla 6 sessioner med subagenter (45 subagent-transkript) hade subagenterna **samma modell som huvudsessionen** | Samma räkning. Inga blandade modeller och inga andra modeller, till exempel Haiku |
-| Kolumnen `modell` i `metrics/arbetsmoment.csv` stämmer med transkripten: 11 rader `claude-opus-5-5`, 1 rad `claude-sonnet-5-5` | Transkript och CSV |
+| Kolumnen `modell` i `metrics/arbetsmoment.csv` stämmer med transkripten: 11 rader `claude-opus-5-5`, 2 rader `claude-sonnet-5-5` (`344b232c` och `0d2737f1`) | Transkript och CSV. *(Vid 15:19 stod 1 rad Sonnet, före raden för `0d2737f1`. Modellen på den raden är läst ur CSV:n men inte omjämförd mot transkriptet.)* |
 | `record-metrics.js` summerar tokens för huvudsession och subagenter ihop och skriver den **sista** modell som sågs | `.claude/hooks/record-metrics.js` rad 122–170 och 241 |
 | Blind granskning med `granskare` (Sonnet 5.5, via `inherit`) hittade 7 av 7 tillämpliga planterade fel: 49 411 ms och 31 199 agenttokens | `r10-testgren/jamforelse.md`, agentens egna siffror |
 
@@ -158,31 +158,47 @@ Varför parallellt: Review och Verify är oberoende av varandra och läser bara.
 | `9cd08258` | 16 nov | Frågor 7–9 med konsekvenser | 499,2 | 37,7 | 206 084 | 21 % | 16,64 | Opus 5.5 |
 | `f03e7ab5` | 16 nov | Kravuppfyllnad R01–R24 inför examination | 360,8 | 65,2 | 355 997 | 34 % | 25,22 | Opus 5.5 |
 | `344b232c` | 17–18 nov | R09 orders pagination and status filtering | 898,5 | 63,0 | 477 991 | 36 % | 20,30 | Sonnet 5.5 |
-| `0d2737f1` (**pågående, ögonblicksbild 18 nov 14:33 UTC**) | 18 nov | (ingen rad än) | 141,0 | 19,5 | 148 331 | 7 % | 4,46 | Sonnet 5.5 |
+| `0d2737f1` (**CSV-rad, slutvärde**) | 18 nov | R10 steg 2 | 183,3 | 25,0 | 188 230 | ej omräknad | 6,18 | Sonnet 5.5 |
+
+*Ögonblicksbild som gällde 18 nov 14:33 UTC, före CSV-raden (behålls som historik): `0d2737f1`, 141,0 min vägg, 19,5 min API, 148 331 output-tokens, subagentandel 7 %, 4,46 USD. Se avstämningen nedan.*
 
 Två ytterligare CSV-rader (`108ab81a`, `997f4ec5`, 15 november) saknar etikett och kostnad och har ett anrop vardera. De är inte med i tabellen.
 
-**Summa för de 12 raderna i CSV:n:** vägg 2 432,3 min, API 272,6 min, 1 330 API-anrop, 2 954 input-tokens, 1 620 522 output-tokens, 221 096 847 cache-läsningar och 4 454 931 cache-skrivningar. **Kostnad: 99,38 USD (uppskattning), summerad över de 10 rader som har en kostnad.** Opus 5.5: 11 rader, varav 9 har kostnad (79,08 USD), och 1 142 531 output-tokens. Sonnet 5.5: 1 rad, 20,30 USD och 477 991 output-tokens. Raderna är inte jämförbara som modelljämförelse, eftersom arbetet skiljer sig mellan sessionerna. *(En tidigare version av den här raden sa "12 raderna … 99,38 USD" och "Opus 5.5: 11 rader, 79,08 USD". Två av raderna saknar kostnad, så summan gäller 10 rader.)*
+**Summa för de 13 raderna i CSV:n (omräknad 18 november efter att `SessionEnd` skrev raden för `0d2737f1`):** vägg 2 615,6 min, API 297,6 min, 1 481 API-anrop, 3 312 input-tokens, 1 808 752 output-tokens, 244 226 259 cache-läsningar och 4 746 486 cache-skrivningar. **Kostnad: 105,57 USD (exakt 105,5674, uppskattning), summerad över de 11 rader som har en kostnad.** Opus 5.5: 11 rader, varav 9 har kostnad (79,08 USD, exakt 79,0849), och 1 142 531 output-tokens. Sonnet 5.5: 2 rader, 26,48 USD (exakt 26,4825: 20,2999 och 6,1826) och 666 221 output-tokens. Summan är räknad ur CSV:n med `node`. Raden för `0d2737f1` är inte jämförd mot transkriptet, och kostnaden är Claude Codes uppskattning. Raderna är inte jämförbara som modelljämförelse.
+
+*Tidigare summa (historik, 18 november 15:19, 12 rader, före raden för `0d2737f1`):* vägg 2 432,3 min, API 272,6 min, 1 330 API-anrop, 2 954 input-tokens, 1 620 522 output-tokens, 221 096 847 cache-läsningar och 4 454 931 cache-skrivningar. **Kostnad: 99,38 USD (uppskattning), summerad över de 10 rader som har en kostnad.** Opus 5.5: 11 rader, varav 9 har kostnad (79,08 USD), och 1 142 531 output-tokens. Sonnet 5.5: 1 rad, 20,30 USD och 477 991 output-tokens. Raderna är inte jämförbara som modelljämförelse, eftersom arbetet skiljer sig mellan sessionerna. *(En tidigare version av den här raden sa "12 raderna … 99,38 USD" och "Opus 5.5: 11 rader, 79,08 USD". Två av raderna saknar kostnad, så summan gäller 10 rader.)*
 
 ### Avstämning av kostnadssiffrorna (18 november 2026)
 
 | Siffra | Var | Avstämd mot | Resultat |
 |---|---|---|---|
-| 99,38 USD (summa) | Den här filen och R20 | Exakt summa av radernas `kostnad_usd_uppskattad` (4 decimaler): 99,3848. Summan av de avrundade raderna i tabellen: 99,37 | **Stämmer.** Skillnaden på 0,01 USD är avrundning. Opus: exakt 79,0849, avrundat 79,07 |
+| 99,38 USD (summa av 12 rader, **historik 18 nov 15:19**, ersatt av 105,57 USD nedan) | Den här filen och R20 (före uppdateringen) | Exakt summa av radernas `kostnad_usd_uppskattad` (4 decimaler): 99,3848. Summan av de avrundade raderna i tabellen: 99,37 | **Stämmer.** Skillnaden på 0,01 USD är avrundning. Opus: exakt 79,0849, avrundat 79,07 |
 | 3,86 / 1,53 / 0,90 USD (`81117d99`, `38312034`, `51e9ca5b`) | `sessions/session-06-2026-11-15.md` rad 184–186 | CSV-raderna | **Stämmer** |
 | 18,95 USD för `344b232c` | `sessions/session-16-2026-11-18.md` rad 47 (ögonblicksbild 18 nov 12:00:30 UTC, markerad preliminär) | CSV-raden: 20,2999 USD, och live-filen vid 12:11:13 UTC: 20,2999 | **Ingen motsägelse.** Loggen visar en tidigare ögonblicksbild. Slutvärdet 20,30 USD är CSV-raden. Skillnaden är 1,35 USD som uppstod under de sista cirka 11 minuterna |
 | Tid för `344b232c`: 888 min vägg, 60 min API (Session 16) | Samma log | CSV: 898,5 och 63,0 min | **Ingen motsägelse**, samma förklaring (tidigare ögonblicksbild) |
 | CSV-tider (`22:12`–`13:11`) | `metrics/arbetsmoment.csv` | Live-filen: `21:12:48`–`12:11:13` UTC | **Stämmer.** CSV:n är i lokal tid (UTC+1) |
 | Pågående session `0d2737f1`: 4,46 USD, 141,0 min vägg, 19,5 min API, 148 331 output-tokens | Live-fil och transkript, 18 nov 14:33 UTC | Ingen CSV-rad än | Ögonblicksbild som växer. En tidigare avläsning (14:11 UTC) gav 3,60 USD och 113 551 tokens. Slutvärdet blir en CSV-rad när `SessionEnd` har körts |
 
-Med den pågående sessionen som ögonblicksbild blir den samlade uppskattade kostnaden cirka 103,84 USD (99,38 + 4,46). Det är **inte** ett slutvärde.
+*Historik (18 nov 15:19):* med den pågående sessionen som ögonblicksbild blev den samlade uppskattade kostnaden cirka 103,84 USD (99,38 + 4,46). Det var **inte** ett slutvärde.
+
+**Uppdatering mot CSV:n (efter att `SessionEnd` skrev raden för `0d2737f1`):**
+
+| Siffra | Ögonblicksbild (historik) | CSV-rad (nu) | Skillnad |
+|---|---|---|---|
+| `0d2737f1`, kostnad | 4,46 USD (14:33 UTC) | 6,1826 USD | +1,72 USD. Sessionen fortsatte till 16:15 (lokal tid) |
+| `0d2737f1`, vägg | 141,0 min | 183,3 min | +42,3 min |
+| `0d2737f1`, API | 19,5 min | 25,0 min | +5,5 min |
+| `0d2737f1`, output-tokens | 148 331 | 188 230 | +39 899 |
+| Samlad kostnad | cirka 103,84 USD (uppskattning) | **105,57 USD** (99,3848 + 6,1826 = 105,5674) | +1,73 USD. Ögonblicksbilden var ett lägre värde, som väntat |
+
+Summan 105,57 USD gäller de 11 rader som har en kostnad. Två rader (`108ab81a`, `997f4ec5`) saknar kostnad.
 
 Kostnaderna är Claude Codes egen uppskattning (`total_cost_usd_estimate`). Hur den räknas ut är inte kontrollerat, och de sessioner som delas mellan flera arbetsmoment kan inte delas upp (se "Mätvärden som saknas").
 
 ### Mätvärden som saknas (flaggat)
 
 1. **Mätningen är per session, inte per arbetsmoment.** Etiketten är sessionens första ämne. Fem rader heter "test-matning" och beskriver inte arbetet. Session-id står bara i fem sessionsloggar (`81117d99`, `38312034`, `51e9ca5b`, `dfe9fec3`, `344b232c`), så koppling till arbetsmoment kan inte beläggas för de övriga fem märkta raderna. Tid, tokens och kostnad per R09, R10 och R11 går därför inte att redovisa separat. De ingår alla i `344b232c` (och delvis `0d2737f1`).
-2. **Den pågående sessionen** (`0d2737f1`) har ingen rad ännu. `SessionEnd`-hooken skriver raden vid `/clear` eller avslut. Siffrorna för den är en ögonblicksbild från statuslinjen och transkripten.
+2. **Den pågående sessionen** (Session 18) har ingen rad ännu. `SessionEnd`-hooken skriver raden vid `/clear` eller avslut. *(18 november 15:19 gällde detta `0d2737f1`, vars rad nu finns i CSV:n. Siffrorna för den var då en ögonblicksbild från statuslinjen och transkripten.)*
 3. **Priser per modell** och därmed kostnad per token-typ saknas. Cache-läsningar utgör nästan alla tokens (221 M mot 1,6 M output), men hur kostnaden fördelas är inte känt.
 4. **Subagenternas egen tid och kostnad** är inte uppdelade. Bara token-andelen är mätt. Agenternas egna siffror finns spridda i loggarna (till exempel 31 199 tokens och 49 411 ms för den blinda granskningen).
 5. **Antal fel som kontrollerna upptäckt över hela projektet** är inte sammanställt.
